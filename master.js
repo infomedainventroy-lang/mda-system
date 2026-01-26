@@ -1,16 +1,4 @@
-<script>
-// Firebase config
-const firebaseConfig = {
-  apiKey: "AIzaSyBfpldPI5gydNrrF0UaJJUkCKhejJiQq3U",
-  authDomain: "meda-inventory-neve-yamin.firebaseapp.com",
-  databaseURL: "https://meda-inventory-neve-yamin-default-rtdb.europe-west1.firebasedatabase.app",
-  projectId: "meda-inventory-neve-yamin",
-  storageBucket: "meda-inventory-neve-yamin.firebasestorage.app",
-  messagingSenderId: "279956329748",
-  appId: "1:279956329748:web:957413804db84343691e01"
-};
-firebase.initializeApp(firebaseConfig);
-const db=firebase.database();
+firebase.initializeApp(window.SITE_CONFIG);
 
 let inv=[], team=[], logs=[], chart, localChanges={};
 
