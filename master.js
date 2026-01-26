@@ -1,4 +1,5 @@
 firebase.initializeApp(window.SITE_CONFIG);
+const db = firebase.database();
 
 let inv=[], team=[], logs=[], chart, localChanges={};
 
