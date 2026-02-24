@@ -14,6 +14,9 @@
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
 <style>
 :root {
     --mda-blue: #003366;
@@ -51,6 +54,54 @@ body {
     min-height: 100vh;
     padding: 20px;
 }
+	.google-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: #ffffff;
+    color: #757575;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    padding: 10px 20px;
+    font-size: 16px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    width: 100%;
+    max-width: 280px;
+    margin: 15px auto;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.google-btn:hover {
+    box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+    background-color: #f8f9fa;
+    border-color: #ccc;
+}
+
+.google-btn img {
+    width: 20px;
+    height: 20px;
+    margin-left: 12px; /* רווח בין הלוגו לטקסט בצד שמאל כי האתר ב-RTL */
+}
+
+/* קו מפריד "או" כדי להפריד בין הכניסה הישנה לגוגל */
+.separator {
+    display: flex;
+    align-items: center;
+    text-align: center;
+    color: #999;
+    margin: 20px 0;
+}
+
+.separator::before, .separator::after {
+    content: '';
+    flex: 1;
+    border-bottom: 1px solid #ddd;
+}
+
+.separator:not(:empty)::before { margin-left: .5em; }
+.separator:not(:empty)::after { margin-right: .5em; }
 
 .login-card {
     background: white;
