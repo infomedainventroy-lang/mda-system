@@ -1,0 +1,2068 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+
+    <script>
+        const APP_VERSION = "1.06";
+        const APP_BUILD_TS = 1770592673528;
+    </script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<!---   Per Site - Now Dynamic -->
+<title id="page-title">Loading...</title>
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<style>
+:root {
+    --mda-blue: #003366;
+    --mda-red: #cc0000;
+    --bg: #f8f9fa;
+    --success: #28a745;
+}
+
+body {
+    font-family: 'Segoe UI', Tahoma, sans-serif;
+    background: var(--bg);
+    margin: 0;
+    direction: rtl;
+}
+
+.hidden {
+    display: none !important;
+}
+
+.ticker-wrap {
+    background: #ffc107;
+    color: #000;
+    padding: 10px;
+    font-weight: bold;
+    text-align: center;
+    border-bottom: 2px solid #e0a800;
+    font-size: 1.1em;
+}
+
+.login-page {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    padding: 20px;
+}
+
+.login-card {
+    background: white;
+    width: 100%;
+    max-width: 400px;
+    padding: 25px;
+    border-radius: 15px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+    margin-bottom: 20px;
+}
+
+input, select {
+    width: 100%;
+    padding: 12px;
+    margin: 10px 0;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    font-size: 16px;
+    box-sizing: border-box;
+}
+
+.btn {
+    background: var(--mda-blue);
+    color: white;
+    padding: 14px;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    width: 100%;
+    font-weight: bold;
+    font-size: 16px;
+}
+
+header {
+    background: var(--mda-blue);
+    color: white;
+    padding: 15px;
+    text-align: center;
+}
+
+.nav-tabs {
+    display: flex;
+    background: white;
+    border-bottom: 2px solid #ddd;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    overflow-x: auto;
+}
+
+.tab-btn {
+    flex: 1;
+    padding: 15px;
+    border: none;
+    cursor: pointer;
+    font-weight: bold;
+    background: none;
+    color: #666;
+    white-space: nowrap;
+}
+
+.tab-btn.active {
+    color: var(--mda-blue);
+    border-bottom: 4px solid var(--mda-blue);
+}
+
+.content {
+    padding: 15px;
+    max-width: 900px;
+    margin: auto;
+}
+
+.card {
+    background: white;
+    padding: 20px;
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+    margin-bottom: 15px;
+}
+
+.stats-grid {
+    display: flex;
+    gap: 15px;
+    margin-bottom: 15px;
+}
+
+.stat-card {
+    flex: 1;
+    background: white;
+    padding: 20px;
+    border-radius: 12px;
+    text-align: center;
+    border-bottom: 4px solid var(--mda-blue);
+}
+
+.stat-num {
+    font-size: 2em;
+    font-weight: bold;
+    color: var(--mda-blue);
+    display: block;
+}
+
+.cat-title {
+    font-weight: bold;
+    color: var(--mda-blue);
+    border-right: 5px solid var(--mda-red);
+    padding-right: 12px;
+    margin: 25px 0 15px 0;
+    font-size: 1.2em;
+}
+
+.item-card {
+    background: white;
+    border-radius: 12px;
+    padding: 15px;
+    margin-bottom: 10px;
+    border: 1px solid #e0e4e8;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.item-name {
+    font-weight: bold;
+    font-size: 1.1em;
+    color: #2d3436;
+}
+
+.item-stock {
+    font-size: 0.9em;
+    color: #636e72;
+    display: block;
+}
+
+.quick-input {
+    width: 85px !important;
+    margin: 0 !important;
+    text-align: center;
+    border: 2px solid #dfe6e9 !important;
+    border-radius: 8px !important;
+    height: 40px;
+    font-weight: bold;
+    color: var(--mda-red);
+    font-size: 1.1em;
+}
+
+.quick-input.changed {
+    border-color: var(--mda-red) !important;
+    background: #fff5f5;
+}
+
+#floating-save {
+    position: fixed;
+    bottom: 20px;
+    left: 20px;
+    background: var(--success);
+    color: white;
+    padding: 18px 30px;
+    border-radius: 50px;
+    box-shadow: 0 8px 25px rgba(40,167,69,0.5);
+    border: none;
+    font-weight: bold;
+    font-size: 1.2em;
+    cursor: pointer;
+    z-index: 1000;
+    display: none;
+    animation: pop 0.3s ease;
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 14px;
+    background: white;
+}
+
+th, td {
+    padding: 12px;
+    border-bottom: 1px solid #eee;
+    text-align: center;
+}
+
+th {
+    background: #f8f9fa;
+    color: var(--mda-blue);
+    font-weight: bold;
+}
+
+.logs-table-container {
+    overflow-x: auto;
+    border-radius: 8px;
+    border: 1px solid #eee;
+}
+
+.badge-qty {
+    background: #fff5f5;
+    color: var(--mda-red);
+    padding: 4px 10px;
+    border-radius: 20px;
+    font-weight: bold;
+}
+
+.user-tag {
+    font-weight: bold;
+    color: var(--mda-blue);
+}
+
+.admin-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px;
+    border-bottom: 1px solid #eee;
+}
+
+.btn-delete-item {
+    background: none;
+    border: none;
+    color: var(--mda-red);
+    cursor: pointer;
+    font-size: 1.2em;
+    font-weight: bold;
+}
+
+.btn-rename {
+    background: var(--mda-blue) !important;
+    color: white !important;
+    padding: 8px 12px !important;
+    margin-left: 10px;
+    width: auto !important;
+    font-size: 0.9em;
+    cursor: pointer !important;
+    border: none !important;
+    border-radius: 6px !important;
+    z-index: 10;
+}
+
+.btn-danger {
+    background: var(--mda-red) !important;
+    margin-top: 10px;
+}
+
+.custom-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0,0,0,0.5);
+    display: none;
+    z-index: 1000;
+    align-items: center;
+    justify-content: center;
+}
+
+.modal-content {
+    background: white;
+    padding: 20px;
+    border-radius: 10px;
+    max-width: 400px;
+    text-align: center;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+}
+
+.modal-buttons {
+    margin-top: 15px;
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+}
+
+.modal-btn {
+    padding: 10px 20px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-weight: bold;
+}
+
+.modal-btn-confirm {
+    background: var(--mda-blue);
+    color: white;
+}
+
+.modal-btn-cancel {
+    background: #ccc;
+    color: #333;
+}
+
+
+.overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+}
+.hidden { display: none; }
+
+.confirm-box {
+  background: #fff;
+  padding: 20px;
+  border-radius: 8px;
+  width: 280px;
+  text-align: center;
+}
+.confirm-actions {
+  margin-top: 15px;
+  display: flex;
+  justify-content: space-between;
+}
+.confirm-actions button {
+  padding: 6px 14px;
+}
+.confirm-actions .danger {
+  background: #cc0000;
+  color: #fff;
+}
+
+
+.admin-qty-box {
+    display: flex;
+    gap: 6px;
+    align-items: center;
+}
+
+.admin-qty-box.reduce {
+    background: #ffe5e5;
+    border: 1px solid #dc3545;
+    padding: 6px;
+    border-radius: 8px;
+}
+
+.qty-btn.minus {
+    background: #dc3545;
+    color: #fff;
+    border: none;
+    border-radius: 6px;
+    width: 32px;
+    height: 32px;
+    font-size: 20px;
+    cursor: pointer;
+}
+
+.qty-btn.minus:hover {
+    background: #c82333;
+}
+
+/* ADD QTY BUTTON */
+.qty-btn.plus {
+    background: #28a745;   /* green */
+    color: #fff;
+    border: none;
+    border-radius: 6px;
+    width: 32px;
+    height: 32px;
+    font-size: 20px;
+    cursor: pointer;
+}
+
+/* HOVER EFFECT */
+.qty-btn.plus:hover {
+    background: #218838;  /* slightly darker green */
+}
+
+.qty-input {
+    width: 60px;
+}
+
+.reason-input {
+    width: 140px;
+}
+
+/* ===== ADMIN INVENTORY LAYOUT FIX ===== */
+/* ===== ADMIN INVENTORY – FIXED RTL GRID ===== */
+
+.admin-item {
+    border-bottom: 1px solid #e0e0e0;
+    padding: 10px 0;
+}
+
+/* שורה כללית */
+.admin-line {
+    display: grid;
+    grid-template-columns: 1fr 90px 1fr; /* ימין | אמצע קבוע | שמאל */
+    align-items: center;
+}
+
+/* צד ימין – שם / קטגוריה */
+.admin-right {
+    text-align: right;
+}
+
+/* עמודת כמות – תמיד באמצע */
+.admin-qty-current {
+    width: 90px;
+    text-align: center;
+    font-weight: bold;
+    color: var(--mda-red);
+    font-size: 16px;
+    border: 2px solid #dfe6e9;
+    border-radius: 8px;
+    height: 40px;
+    background: #fff;
+}
+
+/* צד שמאל – כפתורים / קלט */
+.admin-left {
+    display: flex;
+    justify-content: flex-end;   /* 🔥 הצמדה לשמאל ב-RTL */
+    gap: 8px;
+    align-items: center;
+    justify-self: end;           /* 🔥 הצמדה לשמאל בתוך ה-grid */
+}
+
+
+/* שורה שנייה */
+.admin-line.second {
+    margin-top: 6px;
+}
+
+/* קלטים */
+.admin-line.second input.qty-input {
+    width: 90px;          /* ש"כמות" תיכנס */
+    text-align: center;
+}
+
+.admin-line.second input.reason-input {
+    width: 140px;
+}
+
+/* כפתורי + - */
+.qty-btn {
+    width: 34px;
+    height: 34px;
+    font-size: 18px;
+    font-weight: bold;
+}
+
+
+@keyframes pop {
+    from {
+        transform: scale(0);
+    }
+    to {
+        transform: scale(1);
+    }
+}
+</style>
+</head>
+<body>
+
+<div id="ticker-login" class="ticker-wrap"></div>
+
+<div id="scr-login" class="login-page">
+<!-- Per Site code - Now Dynamic -->
+<img id="site-logo" src="" style="max-width:160px;margin-bottom:20px;">
+<div class="login-card">
+<h3>כניסת צוות 🧑‍⚕️</h3>
+<input type="number" id="u-phone" placeholder="מספר טלפון">
+<input type="password" id="u-pass" placeholder="קוד אישי">
+<button class="btn" onclick="login('user')">כניסה</button>
+<p id="err-user" style="color:red; display:none; font-weight:bold; margin-top:10px; text-align:center;">⚠️ מספר טלפון או קוד אישי שגויים</p>
+</div>
+<div class="login-card" style="background:#f1f3f5;">
+<h4>ניהול ⚙️</h4>
+<input type="email" id="a-email" placeholder="אימייל מנהל">
+<input type="password" id="a-pass" placeholder="סיסמה">
+<button class="btn" style="background:#455a64" onclick="login('admin')">כניסת מנהל</button>
+<p id="err-admin" style="color:red; display:none; font-weight:bold; margin-top:10px; text-align:center;">⚠️ אימייל או סיסמה שגויים</p>
+</div>
+</div>
+
+<div id="app-main" class="hidden">
+<div id="ticker" class="ticker-wrap"></div>
+<div id="system-msg" style="text-align:center; margin:5px 0; font-weight:bold;"></div>
+<!-- Per Site code - Now Dynamic -->
+<header><h2 id="site-header">Loading...</h2></header>
+
+<div id="scr-admin" class="hidden">
+<div class="nav-tabs">
+<button class="tab-btn active" onclick="showTab('tab-dash', this)">📊 דאשבורד</button>
+<button class="tab-btn" onclick="showTab('tab-reports', this)">📈 דוחות</button>
+<button class="tab-btn" onclick="showTab('tab-inv', this)">📦 מלאי</button>
+<button class="tab-btn" onclick="showTab('tab-team', this)">👥 צוות</button>
+<button class="tab-btn" onclick="showTab('tab-logs', this)">📜 לוגים</button>
+<button class="tab-btn" onclick="logout()" style="color:var(--mda-red)">יציאה</button>
+</div>
+
+<div class="content">
+<!-- Dashboard -->
+<div id="tab-dash" class="tab-pane">
+<div class="card">
+<h4>📢 עדכון הודעה רצה</h4>
+<input type="text" id="set-ticker" placeholder="הזן הודעה...">
+<button class="btn" onclick="db.ref('settings/ticker').set(document.getElementById('set-ticker').value)">עדכן הודעה</button>
+</div>
+<div class="stats-grid">
+<div class="stat-card">סה"כ פריטים<br><span id="st-total" class="stat-num">0</span></div>
+<div class="stat-card">קטגוריות<br><span id="st-cats" class="stat-num">0</span></div>
+</div>
+<div class="card" style="min-height: 300px;">
+<canvas id="chartPie"></canvas>
+</div>
+</div>
+
+
+
+<!-- Reports -->
+<div id="tab-reports" class="tab-pane hidden">
+<div class="card">
+<h4>🔍 פילוח צריכת מלאי</h4>
+<select id="report-range" onchange="generateReport()">
+<option value="1">היום</option>
+<option value="7">שבוע אחרון</option>
+<option value="30" selected>30 יום אחרונים</option>
+</select>
+<div id="report-results" style="margin-top:15px;"></div>
+</div>
+</div>
+
+<!-- Inventory Admin -->
+<div id="tab-inv" class="tab-pane hidden">
+<div class="card">
+<h4>➕ הוספת מוצר חדש</h4>
+<input type="text" id="n-name" placeholder="שם מוצר">
+<input type="text" id="n-cat" placeholder="קטגוריה">
+<input type="number" id="n-qty" placeholder="כמות התחלתית">
+<button class="btn" onclick="addItem()">הוסף למלאי</button>
+</div>
+<div class="card">
+<h4>📤 ייבוא וייצוא קבצים</h4>
+<button class="btn" style="background:#6c757d;margin-bottom:10px;" onclick="downloadInv()">📥 הורד קובץ CSV מלאי</button>
+<input type="file" id="csv-upload" accept=".csv" style="display:block;margin:10px 0;">
+<button class="btn" style="background:var(--success)" onclick="uploadInv()">📤 עדכן מלאי מקובץ</button>
+<button class="btn btn-danger" onclick="deleteAllInventory()">🗑️ מחיקת כל המוצרים במערכת</button>
+</div>
+<div class="card">
+<input type="text" placeholder="🔍 חפש פריט במלאי..." oninput="renderAdmin(this.value)">
+</div>
+<div id="admin-list" class="card"></div>
+</div>
+
+<!-- Team -->
+<div id="tab-team" class="tab-pane hidden">
+<div class="card">
+<h4>הוספת איש צוות</h4>
+<input type="text" id="t-name" placeholder="שם מלא">
+<input type="number" id="t-phone" placeholder="מספר טלפון">
+<input type="text" id="t-pin" placeholder="קוד אישי">
+<button class="btn" onclick="addTeam()">שמור צוות</button>
+</div>
+<div class="card">
+<h4>👥 צוות רגיל</h4>
+<table>
+					<thead>
+						<tr>
+							<th>שם</th>
+							<th>טלפון</th>
+							<th>קוד</th>
+							<th>מחיקה</th>
+						</tr>
+					</thead>
+<tbody id="team-table"></tbody>
+</table>
+</div>
+
+<div class="card">
+<h4>👨‍💼 הוספת מנהל</h4>
+<input type="email" id="admin-email" placeholder="אימייל מנהל">
+<input type="text" id="admin-password" placeholder="סיסמה">
+<input type="text" id="admin-display-name" placeholder="שם תצוגה (בעברית)">
+<button class="btn" onclick="addAdmin()">הוסף מנהל</button>
+</div>
+<div class="card">
+<h4>👨‍💼 מנהלים</h4>
+<table>
+					<thead>
+						<tr>
+							<th>אימייל</th>
+							<th>שם תצוגה</th>
+							<th>סטטוס</th>
+							<th>פעולות</th>
+						</tr>
+					</thead>
+<tbody id="admin-table"></tbody>
+</table>
+</div>
+</div>
+
+
+<div id="confirmOverlay" class="overlay hidden">
+  <div class="confirm-box">
+    <p id="confirmText">האם אתה בטוח?</p>
+    <div class="confirm-actions">
+      <button onclick="confirmNo()">ביטול</button>
+      <button class="danger" onclick="confirmYes()">אישור</button>
+    </div>
+  </div>
+</div>
+
+<!-- Logs -->
+<div id="tab-logs" class="tab-pane hidden">
+<div class="card">
+<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:15px;">
+<h4 style="margin:0;">📜 היסטוריית פעולות</h4>
+<button class="btn" style="background:var(--success);width:auto;padding:8px 15px;" onclick="downloadLogs()">📥 הורד אקסל</button>
+</div>
+<div class="logs-table-container">
+<table>
+
+<thead>
+<tr>
+  <th>זמן</th>
+  <th>צוות</th>
+  <th>פריט</th>
+  <th>נלקח</th>
+  <th>התווסף</th>
+  <th>מלאי לפני</th>
+  <th>מלאי אחרי</th>
+  <th>סיבה</th>
+</tr>
+</thead>
+<tbody id="logs-list-body"></tbody>
+</table>
+</div>
+</div>
+</div>
+</div>
+</div>
+
+<!-- User Screen -->
+<div id="scr-user" class="hidden content">
+<div class="card" style="background: var(--mda-blue); color:white;">
+<h3 id="u-hello" style="margin:0;"></h3>
+<p style="margin:5px 0 0 0;opacity:0.9;">עדכן כמויות, רשום סיבה ולחץ על שמירה</p>
+</div>
+<div class="card">
+<input type="text" id="u-reason" placeholder="✍️ סיבת הוצאה (למשל: נסיעה 54, מילוי אמבולנס...)">
+<input type="text" id="u-search" placeholder="🔍 חפש ציוד שחסר..." oninput="renderUser(this.value)">
+</div>
+<div id="user-stock-list"></div>
+<button id="floating-save" onclick="syncAllChanges()">💾 שמור שינויים (0)</button>
+<button class="btn" style="background:#6c757d;margin:20px 0;" onclick="logout()">יציאה</button>
+</div>
+
+<!-- Custom Modal for Confirmation -->
+<div id="customModal" class="custom-modal">
+    <div class="modal-content">
+        <h3 id="modalTitle">אישור פעולה</h3>
+        <p id="modalMessage">האם אתה בטוח?</p>
+        <div class="modal-buttons">
+            <button id="modalConfirm" class="modal-btn modal-btn-confirm">אישור</button>
+            <button id="modalCancel" class="modal-btn modal-btn-cancel">ביטול</button>
+        </div>
+    </div>
+</div>
+
+<div id="inputModal" class="custom-modal">
+  <div class="modal-content">
+    <h3 id="inputModalTitle"></h3>
+    <p id="inputModalText"></p>
+
+    <input id="inputModalInput" type="text" style="width:100%;padding:10px;margin-top:10px;">
+
+    <div class="modal-buttons">
+      <button id="inputOk" class="modal-btn modal-btn-confirm">אישור</button>
+      <button id="inputCancel" class="modal-btn modal-btn-cancel">ביטול</button>
+    </div>
+  </div>
+</div>
+
+
+<div id="toast" style="
+  position: fixed;
+  bottom: 30px;
+  right: 30px;
+  background: #333;
+  color: white;
+  padding: 14px 20px;
+  border-radius: 8px;
+  font-weight: bold;
+  display: none;
+  z-index: 10000;
+"></div>
+
+<script>
+// ============================================================================
+// 🎯 SITE SELECTOR - Change this line to switch between sites
+// ============================================================================
+const CURRENT_SITE = 'hodhasharon'; // Options: 'karnei', 'nave', 'tnkids', 'hodhasharon'
+
+// ============================================================================
+// SITE CONFIGURATION - All per-site code consolidated here
+// ============================================================================
+const SITE_CONFIG = {
+    sites: {
+        karnei: {
+            title: 'מערכת מלאי מד"א קרני שומרון - ניהול ושליטה',
+            logoUrl: 'https://i.ibb.co/fzt7rQ60/Whats-App-Image-2026-01-04-at-09-52-21.jpg',
+            headerText: 'מד"א קרני שומרון - ניהול מלאי',
+            logoutUrl: 'https://sites.google.com/view/karnei-shomroni',
+            firebase: {
+                apiKey: "AIzaSyD9ApZOKj7aRUmcAG8MVncsCitOOJBH-cs",
+                authDomain: "mda-inventory.firebaseapp.com",
+                databaseURL: "https://meda-inventory-karnei-shomron-default-rtdb.asia-southeast1.firebasedatabase.app",
+                projectId: "mda-inventory",
+                storageBucket: "meda-inventory-karnei-shomron.firebasestorage.app",
+                messagingSenderId: "695234364436",
+                appId: "1:1081567938760:web:6093630be0672fdc01bdfd"
+            }
+        },
+        nave: {
+            title: 'מערכת מלאי מד"א נווה ימין - ניהול ושליטה',
+            logoUrl: 'https://i.ibb.co/hR1FKxZR/Neve-Yamin.png',
+            headerText: 'מד"א נווה ימין - ניהול מלאי',
+            logoutUrl: 'https://sites.google.com/view/meda-inventory-neve-yamin',
+            firebase: {
+                apiKey: "AIzaSyBfpldPI5gydNrrF0UaJJUkCKhejJiQq3U",
+                authDomain: "meda-inventory-neve-yamin.firebaseapp.com",
+                databaseURL: "https://meda-inventory-neve-yamin-default-rtdb.europe-west1.firebasedatabase.app",
+                projectId: "meda-inventory-neve-yamin",
+                storageBucket: "meda-inventory-neve-yamin.firebasestorage.app",
+                messagingSenderId: "279956329748",
+                appId: "1:279956329748:web:957413804db84343691e01"
+            }
+        },
+        tnkids: {
+            title: 'מערכת מלאי טיפול נמרץ ילדים - ניהול ושליטה',
+            logoUrl: 'https://i.ibb.co/k2VQHrKZ/birth-Logo.webp',
+            headerText: 'טיפול נמרץ ילדים - ניהול מלאי',
+            logoutUrl: 'https://sites.google.com/view/aten-warehouse',
+            firebase: {
+                apiKey: "AIzaSyA28chh4_gehbDVvd5mlln3w-G3uB6FX8s",
+                authDomain: "aten-warehouse.firebaseapp.com",
+                databaseURL: "https://aten-warehouse-default-rtdb.asia-southeast1.firebasedatabase.app",
+                projectId: "aten-warehouse",
+                storageBucket: "aten-warehouse.firebasestorage.app",
+                messagingSenderId: "1007963863702",
+                appId: "1:1007963863702:web:57e18aadc387e341dea0b7"
+            }
+        },
+        hodhasharon: {
+            title: 'מערכת מלאי מד"א הוד״ש - ניהול ושליטה',
+            logoUrl: 'https://i.ibb.co/8L066L53/Hod-Hasharon2.png',
+            headerText: 'מד"א הוד השרון - ניהול מלאי',
+            logoutUrl: 'https://sites.google.com/view/madehod-hasharon',
+            firebase: {
+                apiKey: "AIzaSyCe4yRcJF9_3HXze3HGCwKMLNUjDdlORRM",
+                authDomain: "mda-inventory.firebaseapp.com",
+                databaseURL: "https://mda-inventory-default-rtdb.europe-west1.firebasedatabase.app",
+                projectId: "mda-inventory",
+                storageBucket: "mda-inventory.firebasestorage.app",
+                messagingSenderId: "1081567938760",
+                appId: "1:1081567938760:web:6093630be0672fdc01bdfd"
+            }
+        }
+    }
+};
+
+// Get current site configuration
+const currentConfig = SITE_CONFIG.sites[CURRENT_SITE];
+
+// Firebase config using current site
+const firebaseConfig = currentConfig.firebase;
+
+let inv=[], team=[], logs=[], chart, localChanges={}, admins={};
+
+
+// Initialize site-specific elements
+function initializeSiteElements() {
+    // Set page title
+    document.getElementById('page-title').textContent = currentConfig.title;
+    
+    // Set logo
+    document.getElementById('site-logo').src = currentConfig.logoUrl;
+    
+    // Set header text
+    document.getElementById('site-header').textContent = currentConfig.headerText;
+}
+
+// Initialize when DOM is loaded
+document.addEventListener('DOMContentLoaded', () => {
+    initializeSiteElements(); // sets page title, logo, header
+
+    // Safe to use DOM elements now
+    const tickerEl = document.getElementById('ticker');
+    const tickerLoginEl = document.getElementById('ticker-login');
+    const msgEl = document.getElementById('system-msg');
+
+    db.ref('settings').on('value', snap => {
+        const s = snap.val() || {};
+        const tickerText = s.ticker || '';
+        const msg = s.msg || '';
+        const isLocked = !!s.isLocked;
+        let tsDateStr = '';
+
+        // Calculate version status like in loadData
+        const requiredVersion = s.version || '';
+        const requiredTs = s.TS || 0;
+        let status = '✅ גרסה עדכנית';
+
+        if ((requiredVersion && String(requiredVersion) !== String(APP_VERSION)) || (requiredTs && APP_BUILD_TS < requiredTs)) {
+            status = '❌ גרסה ישנה – נא לרענן ';
+        }
+
+        if (s.TS) {
+            // Convert timestamp to readable Hebrew format
+            const date = new Date(s.TS);
+            tsDateStr = ` | ${date.toLocaleString('he-IL')}`;
+        }
+
+        const tickerContent = `${tickerText} | v${APP_VERSION} ${tsDateStr} | ${status}`;
+        
+        if (tickerEl) tickerEl.innerText = tickerContent;
+        if (tickerLoginEl) tickerLoginEl.innerText = tickerContent;
+        if (msgEl) msgEl.innerText = msg;
+
+        if (isLocked) {
+            document.body.innerHTML = `
+                <div style="text-align:center;padding:40px;font-size:18px;">
+                    ⛔ המערכת נעולה זמנית<br><br>
+                    ${msg || ''}
+                </div>`;
+        }
+    });
+});
+
+// ============================================================================
+// END SITE CONFIGURATION
+// ============================================================================
+
+firebase.initializeApp(firebaseConfig);
+const db=firebase.database();
+
+
+
+function showInputModal(title, text, defaultValue = '') {
+    return new Promise(resolve => {
+        const modal = document.getElementById('inputModal');
+        const titleEl = document.getElementById('inputModalTitle');
+        const textEl = document.getElementById('inputModalText');
+        const input = document.getElementById('inputModalInput');
+        const okBtn = document.getElementById('inputOk');
+        const cancelBtn = document.getElementById('inputCancel');
+
+        titleEl.textContent = title;
+        textEl.textContent = text;
+        input.value = defaultValue;
+
+        modal.style.display = 'flex';
+        input.focus();
+
+        const close = value => {
+            modal.style.display = 'none';
+            okBtn.onclick = null;
+            cancelBtn.onclick = null;
+            resolve(value);
+        };
+
+        okBtn.onclick = () => close(input.value);
+        cancelBtn.onclick = () => close(null);
+    });
+}
+
+
+// Shows a custom modal dialog with title and message, returns a promise that resolves to true/false based on user choice
+function showCustomModal(title, message) {
+    return new Promise((resolve) => {
+        const modal = document.getElementById('customModal');
+        const modalTitle = document.getElementById('modalTitle');
+        const modalMessage = document.getElementById('modalMessage');
+        const confirmBtn = document.getElementById('modalConfirm');
+        const cancelBtn = document.getElementById('modalCancel');
+        
+        modalTitle.textContent = title;
+        modalMessage.textContent = message;
+        modal.style.display = 'flex';
+        
+        const handleConfirm = () => {
+            modal.style.display = 'none';
+            confirmBtn.removeEventListener('click', handleConfirm);
+            cancelBtn.removeEventListener('click', handleCancel);
+            resolve(true);
+        };
+        
+        const handleCancel = () => {
+            modal.style.display = 'none';
+            confirmBtn.removeEventListener('click', handleConfirm);
+            cancelBtn.removeEventListener('click', handleCancel);
+            resolve(false);
+        };
+        
+        confirmBtn.addEventListener('click', handleConfirm);
+        cancelBtn.addEventListener('click', handleCancel);
+    });
+}
+
+// Handles Firebase errors with optional fallback action execution
+function handleFirebaseError(error, fallbackAction) {
+    console.warn('Firebase operation failed:', error);
+    if (fallbackAction) {
+        console.log('Executing fallback action');
+        fallbackAction();
+    }
+}
+
+
+
+async function adminUpdateQuantity(itemId, amount, action = 'add', reason = '') {
+    amount = Math.abs(parseInt(amount, 10));
+    if (!amount) {
+        return showToast("כמות לא תקינה", "error");
+    }
+
+    const delta = action === 'add' ? amount : -amount;
+
+    const res = await changeQuantity({
+        itemId,
+        delta,
+        user: window.curU,
+        reason: reason || (action === 'add' ? 'הוספת ציוד' : 'הסרת ציוד'),
+        action
+    });
+
+    showToast(
+        `${res.itemName}: ${res.beforeQty} → ${res.afterQty}  (${delta > 0 ? '+' : ''}${delta})`
+    );
+}
+
+
+
+
+function confirmDelete(text, onConfirm) {
+    const overlay = document.getElementById('confirmOverlay');
+    document.getElementById('confirmText').innerText = text;
+    overlay.classList.remove('hidden');
+
+    document.getElementById('confirmYes').onclick = () => {
+        overlay.classList.add('hidden');
+        onConfirm();
+    };
+    document.getElementById('confirmNo').onclick = () => {
+        overlay.classList.add('hidden');
+    };
+}
+
+async function toggleTeamStatus(teamId, newStatus) {
+    const text = newStatus ? "להפעיל" : "להשבית";
+
+    const confirmed = await showCustomModal(
+        'אישור שינוי סטטוס',
+        `האם אתה בטוח שברצונך ${text} איש צוות זה?`
+    );
+
+    if (!confirmed) return;
+
+    await db.ref('team/' + teamId + '/active').set(newStatus);
+    showToast(`איש הצוות ${newStatus ? 'הופעל' : 'הושבת'} בהצלחה`);
+}
+
+async function deleteTeamMember(teamId, name) {
+    const confirmed = await showCustomModal(
+        'אישור מחיקת איש צוות',
+        `למחוק את ${name}?`
+    );
+
+    if (!confirmed) return;
+
+    await db.ref('team/' + teamId).remove();
+    showToast("איש הצוות נמחק");
+}
+
+
+// Loads all data from Firebase and sets up real-time listeners for inventory, team, admins, logs, and settings
+function loadData() {
+    db.ref('inventory').on('value', snap => {
+        inv = [];
+        snap.forEach(c => {
+            inv.push({id: c.key, ...c.val()});
+        });
+        renderUser();
+        
+        // Only re-render admin if we're not in the middle of a rename operation
+        if (!window.isRenaming) {
+            renderAdmin();
+        }
+        updateStats();
+    });
+    
+    db.ref('team').on('value', snap => {
+        team = [];
+        let h = "";
+
+        snap.forEach(c => {
+            const t = { id: c.key, ...c.val() };
+            team.push(t);
+
+            const isActive = t.active !== false; // default true
+            const statusText = isActive ? "פעיל" : "לא פעיל";
+            const statusColor = isActive ? "#28a745" : "#dc3545";
+            const toggleText = isActive ? "השבת" : "הפעל";
+
+            h += `
+            <tr>
+                <td>${t.name}</td>
+                <td>${t.phone}</td>
+                <td>${t.pin}</td>
+                <td style="color:${statusColor}; font-weight:bold;">${statusText}</td>
+                <td>
+                    <button class="btn"
+                        style="background:#ffc107;color:#000;padding:4px 8px;font-size:.8em"
+                        onclick="toggleTeamStatus('${t.id}', ${!isActive})">
+                        ${toggleText}
+                    </button>
+
+                    <button class="btn"
+                        style="background:#dc3545;padding:4px 8px;font-size:.8em"
+                        onclick="deleteTeamMember('${t.id}', '${t.name}')">
+                        מחק
+                    </button>
+                </td>
+            </tr>`;
+        });
+
+        document.getElementById('team-table').innerHTML = h;
+    });
+
+    // Load admins from Firebase
+    db.ref('admins').on('value', snap => {
+        admins = {};
+        let adminTableHtml = "";
+        snap.forEach(c => {
+            const admin = c.val();
+            const adminId = c.key;
+            console.log("Read admin: ", admin)
+            
+            if (admin.active) {
+                admins[admin.email] = {
+                    password: admin.password,
+                    displayName: admin.displayName,
+                    id: adminId
+                };
+            }
+            
+            // Build admin table HTML
+            const statusText = admin.active ? "פעיל" : "לא פעיל";
+            const statusColor = admin.active ? "#28a745" : "#dc3545";
+            const toggleText = admin.active ? "השבת" : "הפעל";
+            
+            adminTableHtml += `<tr>
+                <td>${admin.email}</td>
+                <td>${admin.displayName}</td>
+                <td style="color:${statusColor}; font-weight:bold;">${statusText}</td>
+                <td>
+                    <button class="btn" style="background:#ffc107; color:#000; padding:4px 8px; margin:2px; font-size:0.8em;"
+                            onclick="toggleAdminStatus('${adminId}', ${!admin.active})">${toggleText}</button>
+                    <button class="btn" style="background:#dc3545; padding:4px 8px; margin:2px; font-size:0.8em;"
+                            onclick="deleteAdmin('${adminId}', '${admin.email}')">מחק</button>
+                </td>
+            </tr>`;
+        });
+        
+        document.getElementById('admin-table').innerHTML = adminTableHtml;
+        console.log('Admins loaded:', Object.keys(admins).length);
+    });
+
+    db.ref('logs').orderByChild('timestamp').on('value', snap => {
+        logs = [];
+        let h = "";
+        snap.forEach(c => {
+            const l = c.val();
+            const amount = Number.isFinite(l.amount)
+                ? l.amount
+                : Math.abs(l.delta || 0);
+            logs.push(l);
+            const action = l.action || 'take';
+            const taken = (action === 'take' || action === 'sub' || (action === 'manual' && l.delta < 0)) ? amount : '';
+            const added = (action === 'add' || (action === 'manual' && l.delta > 0)) ? amount : '';
+            // fallback for old logs
+            const qtyBefore = l.qty_before ?? '-';
+            const qtyAfter = l.qty_after ?? '-';
+            h = `<tr>
+                <td style="color:#666;font-size:0.9em;">${l.date || ''}</td>
+                <td class="user-tag">${l.user || ''}</td>
+                <td><b>${l.item || l.itemName || ''}</b></td>
+                <td style="color:#cc0000;"><b>${taken}</b></td>
+                <td style="color:#28a745;"><b>${added}</b></td>
+                <td><b>${qtyBefore}</b></td>
+                <td><b>${qtyAfter}</b></td>
+                <td style="text-align:right;"><small>${l.reason || '-'}</small></td>
+            </tr>` + h;
+        });
+        document.getElementById('logs-list-body').innerHTML = h;
+    });
+    
+    // Settings listener removed - now handled in DOMContentLoaded event above
+    // to avoid duplicate version checking logic
+}
+loadData();
+
+// Handles user and admin login authentication
+function login(role) {
+    if (role === 'admin') {
+        const e = document.getElementById('a-email').value;
+        const p = document.getElementById('a-pass').value;
+        
+        // Check if admins data is loaded and credentials match
+        if (admins[e] && admins[e].password === p) {
+            window.curU = admins[e].displayName;
+            showApp('scr-admin');
+        } else {
+            // הצגת הודעת שגיאה למנהל
+            document.getElementById('err-admin').style.display = 'block';
+        }
+    } else {
+        const ph = document.getElementById('u-phone').value;
+        const ps = document.getElementById('u-pass').value;
+        const m = team.find(t =>
+            t.phone == ph &&
+            t.pin == ps &&
+            t.active !== false
+        );
+
+        if (m) {
+            window.curU = m.name;
+            document.getElementById('u-hello').innerText = "שלום " + m.name;
+            showApp('scr-user');
+        } else {
+            // הצגת הודעת שגיאה למשתמש (מה שהיה חסר)
+            document.getElementById('err-user').style.display = 'block';
+        }
+    }
+}
+
+// Shows the main application screen and hides login screen
+function showApp(id) {
+    document.getElementById('scr-login').classList.add('hidden');
+    document.getElementById('ticker-login').classList.add('hidden');
+    document.getElementById('app-main').classList.remove('hidden');
+    document.getElementById(id).classList.remove('hidden');
+    
+    if (id === 'scr-admin') {
+        setTimeout(updateStats, 100);
+    }
+}
+
+// Logs out the user and redirects to external site after checking for unsaved changes
+async function logout() {
+    if (Object.keys(localChanges).length > 0) {
+        const confirmed = await showCustomModal(
+            'שינויים לא נשמרו',
+            'יש שינויים שלא נשמרו. לצאת בכל זאת?'
+        );
+        if (!confirmed) return;
+    }
+    // Use site configuration for redirect
+    window.location.href = currentConfig.logoutUrl;
+}
+
+
+// Switches between admin panel tabs and activates the selected tab
+function showTab(id, btn) {
+    document.querySelectorAll('.tab-pane').forEach(p => p.classList.add('hidden'));
+    document.getElementById(id).classList.remove('hidden');
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    
+    if (id === 'tab-dash') {
+        updateStats();
+    }
+    if (id === 'tab-reports') {
+        generateReport();
+    }
+}
+
+// Updates dashboard statistics and creates a pie chart showing inventory categories
+function updateStats() {
+    document.getElementById('st-total').innerText = inv.length;
+    const cats = {};
+    inv.forEach(i => cats[i.category] = (cats[i.category] || 0) + 1);
+    document.getElementById('st-cats').innerText = Object.keys(cats).length;
+
+    const ctx = document.getElementById('chartPie')?.getContext('2d');
+    if (!ctx) return;
+    if (chart) chart.destroy();
+    chart = new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+            labels: Object.keys(cats),
+            datasets: [{
+                data: Object.values(cats),
+                backgroundColor: ['#003366', '#cc0000', '#ffc107', '#28a745', '#17a2b8', '#6c757d']
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false
+        }
+    });
+}
+
+// Generates consumption report for selected time period and displays results in table format
+function generateReport() {
+    const days = parseInt(document.getElementById('report-range').value);
+    const limit = Date.now() - (days * 24 * 60 * 60 * 1000);
+    const summary = {};
+    logs.filter(l => l.timestamp > limit).forEach(l => {
+        summary[l.item] = (summary[l.item] || 0) + parseInt(l.amount);
+    });
+
+    let h = `<table><thead><tr><th>שם מוצר</th><th>סה"כ נלקח</th></tr></thead><tbody>`;
+    for (let item in summary) {
+        h += `<tr><td>${item}</td><td><b>${summary[item]}</b></td></tr>`;
+    }
+    h += `</tbody></table>`;
+    document.getElementById('report-results').innerHTML = Object.keys(summary).length ? h : "אין נתונים לתקופה זו";
+}
+
+function safeLower(v) {
+    return (typeof v === 'string') ? v.toLowerCase() : '';
+}
+
+// Renders user inventory interface grouped by categories with search filtering
+function renderUser(q = "") {
+    const container = document.getElementById('user-stock-list');
+    if (!container || !Array.isArray(inv)) return;
+
+    const query = typeof q === 'string' ? q.toLowerCase() : "";
+    const groups = {};
+
+    // Absolute defensive pass
+    inv.forEach(i => {
+        if (
+            !i ||
+            typeof i !== 'object' ||
+            typeof i.name !== 'string' ||
+            typeof i.category !== 'string'
+        ) {
+            return;
+        }
+
+        groups[i.category] ??= [];
+        groups[i.category].push(i);
+    });
+
+    container.innerHTML = "";
+
+    Object.keys(groups).sort().forEach(cat => {
+        const items = groups[cat].filter(i =>
+            typeof i.name === 'string' &&
+            i.name.toLowerCase().includes(query)
+        );
+
+        if (!items.length) return;
+
+        let h = `<div class="cat-title">${cat}</div>`;
+
+        items.forEach(i => {
+            const pVal = localChanges?.[i.id] ?? "";
+            const qty = Number.isFinite(i.qty) ? i.qty : 0;
+
+            h += `
+                <div class="item-card">
+                    <div>
+                        <span class="item-name">${i.name}</span>
+                        <span class="item-stock">במלאי: ${qty}</span>
+                    </div>
+                    <input
+                        type="number"
+                        class="quick-input ${pVal ? 'changed' : ''}"
+                        value="${pVal}"
+                        placeholder="0"
+                        oninput="trackChange('${i.id}', this.value)"
+                    >
+                </div>
+            `;
+        });
+
+        container.innerHTML += h;
+    });
+}
+
+
+async function changeQuantity({
+    itemId,
+    delta,
+    user,
+    reason = '',
+    action = 'update'
+}) {
+    const itemRef = db.ref('inventory/' + itemId);
+
+    let beforeQty = 0;
+    let afterQty = 0;
+
+    const tx = await itemRef.child('qty').transaction(qty => {
+        qty = qty || 0;
+        beforeQty = qty;
+
+        if (qty + delta < 0) return; // abort
+
+        afterQty = qty + delta;
+        return afterQty;
+    });
+
+    if (!tx.committed) {
+        throw new Error('INSUFFICIENT_STOCK');
+    }
+
+    const snap = await itemRef.once('value');
+    const item = snap.val();
+    const itemName = item?.name || 'לא ידוע';
+
+    await db.ref('logs').push({
+        itemId,
+        item: itemName,              // ✅ שדה אחד בלבד
+        user,
+        action,
+        delta,
+        amount: Math.abs(delta),     // חשוב ל־CSV
+        qty_before: beforeQty,
+        qty_after: afterQty,
+        reason,
+        timestamp: Date.now(),
+        date: new Date().toLocaleString('he-IL')
+    });
+
+    return {
+        itemId,
+        itemName,
+        beforeQty,
+        afterQty,
+        delta
+    };
+}
+
+
+
+// Tracks quantity changes for inventory items and updates the save button visibility
+function trackChange(id, val) {
+    const amt = parseInt(val);
+    
+    if (!amt || amt <= 0) {
+        delete localChanges[id];
+    } else {
+        localChanges[id] = amt;
+    }
+
+    const count = Object.keys(localChanges).length;
+    const btn = document.getElementById('floating-save');
+    
+    if (count > 0) {
+        btn.style.display = 'block';
+        btn.innerText = `💾 שמור שינויים (${count})`;
+    } else {
+        btn.style.display = 'none';
+    }
+}
+
+// Synchronizes all local changes to Firebase database and creates log entries
+async function syncAllChanges() {
+    const reason =
+        document.getElementById('u-reason').value.trim() || "לא צוינה סיבה";
+
+    const btn = document.getElementById('floating-save');
+    btn.innerText = "מעדכן...";
+    btn.disabled = true;
+
+    try {
+        for (const itemId in localChanges) {
+            const amt = localChanges[itemId];
+
+            const res = await changeQuantity({
+                itemId,
+                delta: -amt,
+                user: window.curU,
+                reason,
+                action: 'take'
+            });
+
+            showToast(
+                `"${res.itemName}" עדכון כמות מ ${res.beforeQty} ל ${res.afterQty} (הורדה)`
+            );
+        }
+
+        localChanges = {};
+        document.getElementById('u-reason').value = "";
+        btn.style.display = 'none';
+
+        showToast("המלאי עודכן בהצלחה");
+    } catch (err) {
+        console.error(err);
+        showToast("שגיאה בשמירה", "error");
+    } finally {
+        btn.disabled = false;
+        btn.innerText = "💾 שמור שינויים";
+    }
+}
+ 
+
+// -------------------- Admin / Inventory Functions --------------------
+
+// Renders admin inventory management interface with search filtering and inline editing capabilities
+/* ---------- RENDER ADMIN ---------- */
+function renderAdmin(search = "") {
+    const container = document.getElementById('admin-list');
+    container.innerHTML = "";
+
+    inv
+        .filter(i => i && i.name && i.name.toLowerCase().includes(search.toLowerCase()))
+        .forEach(i => {
+            const item = document.createElement('div');
+            item.className = 'admin-item';
+
+            item.innerHTML = `
+                <!-- שורה ראשונה -->
+                <div class="admin-line">
+                    <!-- ימין -->
+                    <div class="admin-right">
+                        <div class="item-name">${i.name}</div>
+                    </div>
+
+                    <!-- אמצע -->
+                    <input
+                        type="number"
+                        class="admin-qty-current"
+                        value="${i.qty ?? 0}"
+                        min="0"
+                    >
+
+                    <!-- שמאל -->
+                    <div class="admin-left">
+                        <button class="btn-delete-item" title="מחק">🗑️</button>
+                        <button class="btn-rename">שנה שם</button>
+                    </div>
+                </div>
+
+                <!-- שורה שנייה -->
+                <div class="admin-line second">
+                    <!-- ימין -->
+                    <div class="admin-right">
+                        <small style="color:#666;">קטגוריה: ${i.category || "-"}</small>
+                    </div>
+
+                    <!-- אמצע -->
+                    <div></div>
+
+                    <!-- שמאל -->
+                    <div class="admin-left">
+                        <button class="qty-btn plus">+</button>
+                        <button class="qty-btn minus">−</button>
+
+                        <input type="number"
+                               class="qty-input"
+                               placeholder="כמות"
+                               min="1">
+
+                        <input type="text"
+                               class="reason-input"
+                               placeholder="סיבה">
+                    </div>
+                </div>
+            `;
+
+            // --- ELEMENTS ---
+            const currentQtyInput = item.querySelector('.admin-qty-current');
+            const qtyInput = item.querySelector('.qty-input');
+            const reasonInput = item.querySelector('.reason-input');
+            const plusBtn = item.querySelector('.plus');
+            const minusBtn = item.querySelector('.minus');
+            const renameBtn = item.querySelector('.btn-rename');
+            const deleteBtn = item.querySelector('.btn-delete-item');
+
+            // --- EVENTS ---
+
+            // Edit current quantity manually
+            currentQtyInput.addEventListener('change', async () => {
+                const newQty = parseInt(currentQtyInput.value, 10);
+                const oldQty = i.qty ?? 0;
+
+                if (!Number.isInteger(newQty) || newQty < 0) {
+                    currentQtyInput.value = oldQty;
+                    return showToast("כמות לא תקינה", "error");
+                }
+
+                if (newQty === oldQty) return;
+
+                const confirmed = await showCustomModal(
+                    'אישור שינוי כמות',
+                    `לשנות כמות של "${i.name}" מ־${oldQty} ל־${newQty}?`
+                );
+                if (!confirmed) {
+                    currentQtyInput.value = oldQty;
+                    return;
+                }
+
+                const delta = newQty - oldQty;
+
+                try {
+                    const res = await changeQuantity({
+                        itemId: i.id,
+                        delta,
+                        user: window.curU,
+                        reason: 'שינוי כמות ידני',
+                        action: 'manual'
+                    });
+
+                    showToast(`״${res.itemName}״ עדכון כמות מ ${res.beforeQty} ל ${res.afterQty}`);
+                    currentQtyInput.value = res.afterQty;
+                } catch {
+                    currentQtyInput.value = oldQty;
+                    showToast("שגיאה בעדכון כמות", "error");
+                }
+            });
+
+            // Plus button
+            plusBtn.onclick = async () => {
+                const val = parseInt(qtyInput.value, 10);
+                const reason = reasonInput.value || "הוספת ציוד";
+                if (!val || val <= 0) return;
+
+                try {
+                    const res = await changeQuantity({
+                        itemId: i.id,
+                        delta: val,
+                        user: window.curU,
+                        reason,
+                        action: 'add'
+                    });
+
+                    showToast(
+                            `"${res.itemName}" עדכון כמות מ ${res.beforeQty} ל ${res.afterQty} (הוספה)`
+                        );
+                    currentQtyInput.value = res.afterQty;
+                    qtyInput.value = "";
+                    reasonInput.value = "";
+                } catch {
+                    showToast("שגיאה בעדכון כמות", "error");
+                }
+            };
+
+            minusBtn.onclick = async () => {
+                const val = parseInt(qtyInput.value, 10);
+                const reason = reasonInput.value || "הסרת ציוד";
+                if (!val || val <= 0) return;
+
+                try {
+                    const res = await changeQuantity({
+                        itemId: i.id,
+                        delta: -val,
+                        user: window.curU,
+                        reason,
+                        action: 'sub'
+                    });
+
+                    showToast(
+                        `"${res.itemName}" עדכון כמות מ ${res.beforeQty} ל ${res.afterQty} (הורדה)`
+                    );
+                    currentQtyInput.value = res.afterQty;
+                    qtyInput.value = "";
+                    reasonInput.value = "";
+                } catch {
+                    showToast("אין כמות מספקת", "error");
+                }
+            };
+
+            // Rename
+            renameBtn.onclick = async () => {
+                const newName = await showInputModal(
+                    'שינוי שם פריט',
+                    'הזן שם חדש לפריט',
+                    i.name
+                );
+
+                // User cancelled
+                if (newName === null) return;
+
+                const trimmed = newName.trim();
+                if (!trimmed || trimmed === i.name) return;
+
+                // Save
+                await db.ref('inventory/' + i.id + '/name').set(trimmed);
+
+                // Update UI
+                i.name = trimmed;
+                item.querySelector('.item-name').textContent = trimmed;
+
+                showToast('שם הפריט עודכן');
+            };
+
+
+            // Delete
+            deleteBtn.onclick = () => {
+                confirmDelete(`למחוק את ${i.name}?`, () => {
+                    db.ref('inventory/' + i.id).remove();
+                });
+            };
+
+            container.appendChild(item); // append once at the end
+        });
+}
+
+// Adds a new inventory item to the database with validation
+async function addItem(name, category, initialQty = 0) {
+    // if no arguments, read from input fields
+    if (!name && !category) {
+        name = document.getElementById('n-name').value;
+        category = document.getElementById('n-cat').value;
+        initialQty = document.getElementById('n-qty').value;
+    }
+
+    console.log("Adding item ", name, category, initialQty)
+    name = (name || "").trim();
+    category = (category || "").trim();
+    initialQty = parseInt(initialQty, 10) || 0;
+
+    if (!name || !category) {
+        showToast("שם וקטגוריה הם שדות חובה", "error");
+        return;
+    }
+
+    if (initialQty < 0) {
+        showToast("כמות התחלתית לא תקינה", "error");
+        return;
+    }
+
+    try {
+        // 1️⃣ Create item with qty = 0
+        const ref = db.ref('inventory').push();
+        const itemId = ref.key;
+
+        await ref.set({
+            name,
+            category,
+            qty: 0
+        });
+
+        // 2️⃣ Apply initial quantity via transaction (if any)
+        if (initialQty > 0) {
+            const res = await changeQuantity({
+                itemId,
+                delta: initialQty,
+                user: window.curU,
+                reason: "כמות התחלתית",
+                action: "add"
+            });
+
+            // ✅ New toast for initial quantity
+            showToast(
+                `נוסף מוצר חדש "${res.itemName}" עם כמות ${res.afterQty}`
+            );
+        } else {
+            showToast(`הפריט "${name}" נוסף בהצלחה`);
+        }
+
+        // clear inputs
+        document.getElementById('n-name').value = '';
+        document.getElementById('n-cat').value = '';
+        document.getElementById('n-qty').value = '';
+
+    } catch (err) {
+        console.error(err);
+        showToast("שגיאה בהוספת פריט", "error");
+    }
+}
+
+
+// Deletes all inventory items from the database with double confirmation
+async function deleteAllInventory() {
+    const first = await showCustomModal(
+        'אזהרה חמורה',
+        '🚨 פעולה זו תמחק את כל המוצרים לצמיתות. להמשיך?'
+    );
+    if (!first) return;
+
+    const second = await showCustomModal(
+        'אישור סופי',
+        'זהו אישור אחרון. למחוק את כל המלאי?'
+    );
+    if (!second) return;
+
+    await db.ref('inventory').remove();
+    showToast("כל המלאי נמחק בהצלחה.");
+}
+
+
+// Uploads and processes CSV file to update inventory data
+function uploadInv(file) {
+    if (!file) {
+        showToast("לא נבחר קובץ", "error");
+        return;
+    }
+
+    const reader = new FileReader();
+
+    reader.onload = async (e) => {
+        try {
+            const lines = e.target.result.split(/\r?\n/);
+
+            for (let idx = 1; idx < lines.length; idx++) {
+                const l = lines[idx];
+                if (!l || !l.trim()) continue;
+
+                const parts = l.split(',');
+                if (parts.length < 3) continue;
+
+                const n = parts[0].trim();
+                const c = parts[1].trim();
+                const q = parseInt(parts[2], 10) || 0;
+
+                if (!n || !c) continue;
+
+                const nameNorm = safeLower(n);
+                const ex = inv.find(i => safeLower(i.name) === nameNorm);
+
+                if (ex?.id) {
+                    const diff = q - (ex.qty ?? 0);
+
+                    if (diff !== 0) {
+                        await changeQuantity({
+                            itemId: ex.id,
+                            delta: diff,
+                            user: window.curU || 'CSV',
+                            reason: 'ייבוא CSV',
+                            action: diff > 0 ? 'add' : 'sub'
+                        });
+                    }
+
+                    await db.ref('inventory/' + ex.id).update({
+                        category: c,
+                        name: n
+                    });
+                } else {
+                    // new item
+                    const ref = db.ref('inventory').push();
+                    await ref.set({
+                        name: n,
+                        category: c,
+                        qty: 0
+                    });
+
+                    if (q > 0) {
+                        await changeQuantity({
+                            itemId: ref.key,
+                            delta: q,
+                            user: window.curU || 'CSV',
+                            reason: 'כמות התחלתית (CSV)',
+                            action: 'add'
+                        });
+                    }
+                }
+            }
+
+            showToast("הקובץ נטען והמלאי עודכן בהצלחה");
+        } catch (err) {
+            console.error(err);
+            showToast("שגיאה בטעינת הקובץ", "error");
+        }
+    };
+
+    reader.onerror = () => {
+        showToast("שגיאה בקריאת הקובץ", "error");
+    };
+
+    // 🔥 THIS LINE WAS MISSING
+    reader.readAsText(file);
+}
+
+
+function normalizeCategory(cat) {
+    return cat
+        .replace(/^\d+\s*-\s*/,'') // remove "2- ", "2 - "
+        .trim();
+}
+
+
+// Downloads current inventory data as CSV file
+function downloadInv() {
+    let csv = "\uFEFFשם,קטגוריה,כמות\n";
+
+    const categoryOrder = [];
+    const itemsByCategory = {};
+
+    inv.forEach(item => {
+        const rawCat = item.category || 'אחר';
+        const normCat = normalizeCategory(rawCat);
+
+        if (!itemsByCategory[normCat]) {
+            itemsByCategory[normCat] = {
+                displayName: rawCat, // keep original label
+                items: []
+            };
+            categoryOrder.push(normCat);
+        }
+
+        itemsByCategory[normCat].items.push(item);
+    });
+
+    categoryOrder.forEach(catKey => {
+        itemsByCategory[catKey].items.forEach(i => {
+            csv += `${i.name},${i.category},${i.qty}\n`;
+        });
+    });
+
+    const a = document.createElement('a');
+    a.href = 'data:text/csv;charset=utf-8,' + encodeURIComponent(csv);
+    a.download = 'inventory_mda.csv';
+    a.click();
+}
+
+
+
+// Safely formats CSV values by escaping quotes and wrapping in quotes
+const csvSafe = v => `"${String(v ?? '').replace(/"/g, '""')}"`;
+
+// Downloads activity logs as CSV file with detailed transaction history
+function downloadLogs() {
+    let csv = "\uFEFFתאריך,משתמש,מוצר,נלקח,התווסף,מלאי אחרי,סיבה\n";
+
+    logs.forEach(l => {
+        const action = l.action || 'take';
+        csv += [
+            csvSafe(l.date),
+            csvSafe(l.user),
+            csvSafe(l.item),
+            csvSafe(action === 'take' ? l.amount : ''),
+            csvSafe(action === 'add' ? l.amount : ''),
+            csvSafe(l.qty_after),
+            csvSafe(l.reason)
+        ].join(',') + '\n';
+    });
+    
+    const a = document.createElement('a');
+    a.href = 'data:text/csv;charset=utf-8,' + encodeURIComponent(csv);
+    a.download = 'logs_mda_detailed.csv';
+    a.click();
+}
+
+teamMember = {
+  name: "",
+  phone: "",
+  pin: "",
+  active: true,
+  createdAt: Date.now()
+}
+
+
+
+// Adds a new team member to the database with validation
+function addTeam() {
+    const n = document.getElementById('t-name').value.trim();
+    const p = document.getElementById('t-phone').value.trim();
+    const pi = document.getElementById('t-pin').value.trim();
+    
+    if (!n || !p || !pi) {
+        return showToast("נא למלא שם, טלפון וקוד אישי", "error");
+    }
+    
+    db.ref('team').push({
+        name: n,
+        phone: p,
+        pin: pi,
+        active: true,
+        createdAt: Date.now()
+    });
+
+    document.getElementById('t-name').value = "";
+    document.getElementById('t-phone').value = "";
+    document.getElementById('t-pin').value = "";
+
+    showToast("איש צוות נוסף בהצלחה");
+}
+
+
+// Adds a new admin user with email validation and duplicate checking
+function addAdmin() {
+    const email = document.getElementById('admin-email').value.trim();
+    const password = document.getElementById('admin-password').value.trim();
+    const displayName = document.getElementById('admin-display-name').value.trim();
+    
+    if (!email || !password || !displayName) {
+        return showToast("נא למלא את כל השדות", "error");
+    }
+    
+    // Validate email format
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+        return showToast("פורמט אימייל לא תקין", "error");
+    }
+    
+    // Check if admin already exists
+    if (admins[email]) {
+        return showToast("מנהל עם אימייל זה כבר קיים", "error");
+    }
+    
+    db.ref('admins').push({
+        email: email,
+        password: password,
+        displayName: displayName,
+        active: true,
+        createdAt: Date.now(),
+        createdBy: window.curU
+    });
+    
+    document.getElementById('admin-email').value = "";
+    document.getElementById('admin-password').value = "";
+    document.getElementById('admin-display-name').value = "";
+    
+    showToast("מנהל נוסף בהצלחה");
+}
+
+// Toggles admin user active/inactive status with confirmation
+async function toggleAdminStatus(adminId, newStatus) {
+    const statusText = newStatus ? "להפעיל" : "להשבית";
+    const confirmed = await showCustomModal(
+        'אישור שינוי סטטוס מנהל',
+        `האם אתה בטוח שברצונך ${statusText} את המנהל?`
+    );
+    
+    if (confirmed) {
+        db.ref('admins/' + adminId + '/active').set(newStatus);
+        showToast(`סטטוס המנהל ${newStatus ? 'הופעל' : 'הושבת'} בהצלחה`);
+    }
+}
+
+// Deletes an admin user with confirmation dialog
+async function deleteAdmin(adminId, email) {
+    const confirmed = await showCustomModal(
+        'אישור מחיקת מנהל',
+        `האם אתה בטוח שברצונך למחוק את המנהל ${email}?`
+    );
+    
+    if (confirmed) {
+        db.ref('admins/' + adminId).remove();
+        showToast("המנהל נמחק בהצלחה");
+    }
+}
+
+// Displays toast notification with customizable message and type (success/error/warning)
+function showToast(message, type = 'success') {
+    const toast = document.getElementById('toast');
+    toast.textContent = message;
+    toast.style.background =
+        type === 'error' ? '#dc2626' :
+        type === 'warning' ? '#f59e0b' :
+        '#16a34a';
+    toast.style.display = 'block';
+
+    setTimeout(() => {
+        toast.style.display = 'none';
+    }, 3000);
+}
+
+
+
+let confirmCallback = null;
+let promptCallback = null;
+let currentInput = null;
+
+function customConfirm(text, onYes) {
+    document.getElementById('confirmText').innerHTML = text;
+    confirmCallback = onYes;
+    promptCallback = null;
+    document.getElementById('confirmOverlay').classList.remove('hidden');
+}
+
+function customPrompt(text, defaultValue, onSubmit) {
+    const confirmText = document.getElementById('confirmText');
+    confirmText.innerHTML = `
+        <p>${text}</p>
+        <input type="text" id="promptInput" value="${defaultValue || ''}"
+               style="width: 100%; padding: 8px; margin: 10px 0; border: 1px solid #ccc; border-radius: 4px; font-size: 16px;">
+    `;
+    promptCallback = onSubmit;
+    confirmCallback = null;
+    document.getElementById('confirmOverlay').classList.remove('hidden');
+    
+    // Focus and select the input
+    setTimeout(() => {
+        currentInput = document.getElementById('promptInput');
+        if (currentInput) {
+            currentInput.focus();
+            currentInput.select();
+        }
+    }, 100);
+}
+
+function confirmYes() {
+    document.getElementById('confirmOverlay').classList.add('hidden');
+    
+    if (promptCallback && currentInput) {
+        const value = currentInput.value.trim();
+        if (typeof promptCallback === 'function') promptCallback(value);
+        promptCallback = null;
+        currentInput = null;
+    } else if (confirmCallback) {
+        if (typeof confirmCallback === 'function') confirmCallback();
+        confirmCallback = null;
+    }
+}
+
+function confirmNo() {
+    document.getElementById('confirmOverlay').classList.add('hidden');
+    confirmCallback = null;
+    promptCallback = null;
+    currentInput = null;
+}
+
+</script>
+</body>
+</html>
+
