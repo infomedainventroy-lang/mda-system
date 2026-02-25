@@ -2175,7 +2175,19 @@ async function checkPermissions(userEmail) {
         // נבדוק בנפרד את רשימת האדמינים ואת רשימת הצוות
         const adminSnapshot = await db.ref('admins').once('value');
         const teamSnapshot = await db.ref('team').once('value');
-        
+        // חפש את השורות הללו בקוד ותקן אותן כך:
+// חפש את השורות הללו בקוד ותקן אותן כך:
+const adminRecord = Object.values(admins).find(a => 
+    a && a.email && a.email.toLowerCase() === userEmail.toLowerCase()
+);
+
+const teamRecord = Object.values(team).find(t => 
+    t && t.email && t.email.toLowerCase() === userEmail.toLowerCase()
+);
+
+const teamRecord = Object.values(team).find(t => 
+    t && t.email && t.email.toLowerCase() === userEmail.toLowerCase()
+);
         const admins = adminSnapshot.val() || {};
         const team = teamSnapshot.val() || {};
 
