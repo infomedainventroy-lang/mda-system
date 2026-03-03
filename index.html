@@ -14,6 +14,7 @@
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
 <style>
 :root {
     --mda-blue: #003366;
@@ -521,22 +522,24 @@ th {
 #scan-modal {
     position: fixed;
     inset: 0;
-    background: #000;
+    background: #1a1a1a;
     z-index: 9999;
     display: none;
     flex-direction: column;
     align-items: center;
 }
 #scan-modal.active { display: flex; }
+
 #scan-header {
     width: 100%;
-    background: rgba(0,0,0,0.85);
+    background: #003366;
     color: white;
     padding: 14px 18px;
     display: flex;
     align-items: center;
     justify-content: space-between;
     box-sizing: border-box;
+    flex-shrink: 0;
 }
 #scan-header h3 { margin: 0; font-size: 1.05em; }
 #scan-close {
@@ -549,8 +552,8 @@ th {
     font-weight: bold;
     cursor: pointer;
 }
+
 #scan-video-wrap {
-    position: relative;
     width: 100%;
     flex: 1;
     overflow: hidden;
@@ -558,69 +561,39 @@ th {
     display: flex;
     align-items: center;
     justify-content: center;
+    min-height: 0;
 }
-#scan-video {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    display: block;
+
+/* html5-qrcode injects its own elements into #qr-reader */
+#qr-reader {
+    width: 100% !important;
+    border: none !important;
+    background: transparent !important;
 }
-#scan-overlay {
-    position: absolute;
-    inset: 0;
-    pointer-events: none;
-    display: flex;
-    align-items: center;
-    justify-content: center;
+#qr-reader video {
+    width: 100% !important;
+    height: 100% !important;
+    object-fit: cover !important;
 }
-#scan-box {
-    width: 75%;
-    max-width: 300px;
-    height: 100px;
-    border: 3px solid #ffc107;
-    border-radius: 10px;
-    position: relative;
-    box-shadow: 0 0 0 2000px rgba(0,0,0,0.45);
-    overflow: hidden;
-}
-#scan-line {
-    position: absolute;
-    left: 4px; right: 4px;
-    height: 2px;
-    background: linear-gradient(90deg, transparent 0%, #ffc107 50%, transparent 100%);
-    animation: scanMove 1.8s ease-in-out infinite;
-}
-@keyframes scanMove {
-    0%   { top: 6px; opacity: 1; }
-    85%  { top: calc(100% - 8px); opacity: 1; }
-    100% { top: 6px; opacity: 0.3; }
-}
-/* corner marks */
-#scan-box::before,
-#scan-box::after {
-    content: '';
-    position: absolute;
-    width: 18px; height: 18px;
-    border-color: #ffc107;
-    border-style: solid;
-}
-#scan-box::before { top: -2px; right: -2px; border-width: 3px 3px 0 0; border-radius: 0 6px 0 0; }
-#scan-box::after  { bottom: -2px; left: -2px; border-width: 0 0 3px 3px; border-radius: 0 0 6px 0; }
+#qr-reader img { display: none !important; }
+#qr-reader__scan_region { background: transparent !important; }
+#qr-reader__dashboard { display: none !important; }
 
 #scan-status {
-    background: rgba(10,10,10,0.9);
-    color: #ddd;
-    padding: 13px 20px;
+    background: rgba(0,0,0,0.9);
+    color: #eee;
+    padding: 14px 20px;
     text-align: center;
-    font-size: 0.95em;
+    font-size: 1em;
     width: 100%;
     box-sizing: border-box;
-    min-height: 48px;
+    min-height: 52px;
     display: flex;
     align-items: center;
     justify-content: center;
+    flex-shrink: 0;
 }
-#scan-status.ok  { background: #155724; color: #d4edda; font-weight: bold; font-size: 1.05em; }
+#scan-status.ok  { background: #155724; color: #d4edda; font-weight: bold; }
 #scan-status.err { background: #7b1b22; color: #f8d7da; font-weight: bold; }
 
 #scan-tip {
@@ -631,6 +604,7 @@ th {
     font-size: 0.82em;
     width: 100%;
     box-sizing: border-box;
+    flex-shrink: 0;
 }
 
 /* Highlight found item card */
@@ -911,15 +885,10 @@ th {
     <button id="scan-close" onclick="closeScanner()">✕ סגור</button>
   </div>
   <div id="scan-video-wrap">
-    <video id="scan-video" playsinline muted></video>
-    <div id="scan-overlay">
-      <div id="scan-box">
-        <div id="scan-line"></div>
-      </div>
-    </div>
+    <div id="qr-reader"></div>
   </div>
-  <div id="scan-status">🔍 מחפש ברקוד...</div>
-  <div id="scan-tip">כוון את הברקוד לתוך המסגרת הצהובה</div>
+  <div id="scan-status">⏳ מאתחל מצלמה...</div>
+  <div id="scan-tip">כוון את הברקוד אל המצלמה</div>
 </div>
 
 <div id="toast" style="
@@ -2218,124 +2187,93 @@ function showToast(message, type = 'success') {
 
 
 // ============================================================================
-// 📷 BARCODE SCANNER  –  BarcodeDetector API + getUserMedia
+// 📷 BARCODE SCANNER  –  html5-qrcode (הכי אמין לנייד)
 // ============================================================================
 
-let _scanMode    = null;   // 'find' | 'set'
-let _scanItemId  = null;
-let _scanItemEl  = null;
-let _scanStream  = null;
-let _scanRunning = false;
-let _scanRAF     = null;
+let _scanMode   = null;   // 'find' | 'set'
+let _scanItemId = null;
+let _scanItemEl = null;
+let _scanner    = null;   // Html5Qrcode instance
 
 function openScanner(mode, itemId = null, itemEl = null) {
     _scanMode   = mode;
     _scanItemId = itemId;
     _scanItemEl = itemEl;
 
-    const modal  = document.getElementById('scan-modal');
-    const title  = document.getElementById('scan-title');
-    const status = document.getElementById('scan-status');
+    document.getElementById('scan-title').textContent =
+        mode === 'set' ? '📷 סרוק ברקוד למוצר' : '📷 סרוק ברקוד מוצר';
 
-    title.textContent  = mode === 'set' ? '📷 סרוק ברקוד למוצר' : '📷 סרוק ברקוד מוצר';
+    const status = document.getElementById('scan-status');
     status.textContent = '⏳ מאתחל מצלמה...';
-    status.className   = '';
+    status.className = '';
 
-    modal.classList.add('active');
+    // Clear previous content
+    document.getElementById('qr-reader').innerHTML = '';
 
-    // Small delay so modal renders first
-    setTimeout(_startCamera, 150);
+    document.getElementById('scan-modal').classList.add('active');
+
+    // Init after modal is visible
+    setTimeout(_startScanner, 200);
 }
 
-async function _startCamera() {
-    const video  = document.getElementById('scan-video');
+function _startScanner() {
     const status = document.getElementById('scan-status');
 
-    // ── 1. Check BarcodeDetector support ──────────────────────────────────
-    if (!('BarcodeDetector' in window)) {
-        status.textContent = '⚠️ הדפדפן שלך לא תומך בסריקת ברקוד. נסה Chrome/Edge עדכני.';
-        status.className   = 'err';
-        return;
-    }
-
-    // ── 2. Request camera ─────────────────────────────────────────────────
     try {
-        _scanStream = await navigator.mediaDevices.getUserMedia({
-            video: {
-                facingMode: { ideal: 'environment' },
-                width:  { ideal: 1280 },
-                height: { ideal: 720 }
+        _scanner = new Html5Qrcode('qr-reader', { verbose: false });
+
+        const config = {
+            fps: 10,
+            qrbox: { width: 280, height: 120 },
+            aspectRatio: 1.333,
+            disableFlip: false,
+            formatsToSupport: [
+                Html5QrcodeSupportedFormats.EAN_13,
+                Html5QrcodeSupportedFormats.EAN_8,
+                Html5QrcodeSupportedFormats.CODE_128,
+                Html5QrcodeSupportedFormats.CODE_39,
+                Html5QrcodeSupportedFormats.UPC_A,
+                Html5QrcodeSupportedFormats.UPC_E,
+                Html5QrcodeSupportedFormats.ITF,
+                Html5QrcodeSupportedFormats.QR_CODE,
+            ]
+        };
+
+        _scanner.start(
+            { facingMode: 'environment' },   // rear camera
+            config,
+            (decodedText) => {               // ✅ SUCCESS
+                _onScanSuccess(decodedText);
             },
-            audio: false
-        });
-    } catch (err) {
-        console.error('Camera error:', err);
-        if (err.name === 'NotAllowedError') {
-            status.textContent = '🚫 הרשאת מצלמה נדחתה. אפשר הרשאה בהגדרות הדפדפן ונסה שנית.';
-        } else if (err.name === 'NotFoundError') {
-            status.textContent = '📵 לא נמצאה מצלמה במכשיר.';
-        } else {
-            status.textContent = '⚠️ שגיאה בפתיחת המצלמה: ' + err.message;
-        }
-        status.className = 'err';
-        return;
-    }
-
-    // ── 3. Attach stream to video ─────────────────────────────────────────
-    video.srcObject = _scanStream;
-    try {
-        await video.play();
-    } catch (e) {
-        console.warn('video.play() error:', e);
-    }
-
-    // ── 4. Init BarcodeDetector ───────────────────────────────────────────
-    const detector = new BarcodeDetector({
-        formats: [
-            'ean_13', 'ean_8',
-            'code_128', 'code_39', 'code_93',
-            'upc_a', 'upc_e',
-            'itf', 'qr_code', 'data_matrix'
-        ]
-    });
-
-    status.textContent = '🔍 מחפש ברקוד...';
-    _scanRunning = true;
-
-    // ── 5. Scan loop ──────────────────────────────────────────────────────
-    async function scanFrame() {
-        if (!_scanRunning) return;
-
-        if (video.readyState >= 2 && video.videoWidth > 0) {
-            try {
-                const barcodes = await detector.detect(video);
-                if (barcodes && barcodes.length > 0) {
-                    const code = barcodes[0].rawValue;
-                    if (code) {
-                        _onScanSuccess(code);
-                        return;   // stop loop
-                    }
-                }
-            } catch (e) {
-                // detection errors are normal – keep going
+            () => {}                          // decode errors – silent
+        )
+        .then(() => {
+            status.textContent = '🔍 מחפש ברקוד...';
+        })
+        .catch(err => {
+            console.error('Scanner start error:', err);
+            if (String(err).includes('Permission') || String(err).includes('NotAllowed')) {
+                status.textContent = '🚫 הרשאת מצלמה נדחתה – פתח הגדרות דפדפן ואפשר מצלמה';
+            } else {
+                status.textContent = '⚠️ לא ניתן לפתוח מצלמה: ' + err;
             }
-        }
+            status.className = 'err';
+        });
 
-        _scanRAF = setTimeout(scanFrame, 200);   // ~5fps – saves battery
+    } catch (e) {
+        console.error('Html5Qrcode init error:', e);
+        status.textContent = '⚠️ שגיאה בטעינת הסורק. נסה לרענן.';
+        status.className = 'err';
     }
-
-    scanFrame();
 }
 
-// ── Called when a barcode is found ────────────────────────────────────────
 async function _onScanSuccess(code) {
-    _scanRunning = false;
-    if (_scanRAF) { clearTimeout(_scanRAF); _scanRAF = null; }
-    _stopStream();
+    // Stop scanner immediately – prevent double fire
+    await _stopScanner();
 
     const status = document.getElementById('scan-status');
 
-    // ── MODE: set barcode for an admin item ───────────────────────────────
+    // ── מנהל: שמור ברקוד למוצר ───────────────────────────────────────────
     if (_scanMode === 'set' && _scanItemId) {
         await db.ref('inventory/' + _scanItemId + '/barcode').set(code);
 
@@ -2354,7 +2292,7 @@ async function _onScanSuccess(code) {
         return;
     }
 
-    // ── MODE: find item by barcode (team screen) ──────────────────────────
+    // ── צוות: חפש מוצר לפי ברקוד ─────────────────────────────────────────
     if (_scanMode === 'find') {
         const found = inv.find(i =>
             i.barcode && String(i.barcode).trim() === String(code).trim()
@@ -2363,56 +2301,30 @@ async function _onScanSuccess(code) {
         if (!found) {
             status.textContent = `❌ לא נמצא מוצר עם ברקוד: ${code}`;
             status.className   = 'err';
-            // Let user see the error, then allow re-scan or close
+            // אחרי 2.5 שניות – נסה שוב
             setTimeout(() => {
-                if (document.getElementById('scan-modal').classList.contains('active')) {
-                    status.textContent = '🔍 מחפש ברקוד...';
-                    status.className   = '';
-                    // Restart scan
-                    _scanRunning = true;
-                    const video = document.getElementById('scan-video');
-                    const detector = new BarcodeDetector({
-                        formats: ['ean_13','ean_8','code_128','code_39','code_93','upc_a','upc_e','itf','qr_code','data_matrix']
-                    });
-                    async function retryFrame() {
-                        if (!_scanRunning) return;
-                        if (video.readyState >= 2 && video.videoWidth > 0) {
-                            try {
-                                const bc = await detector.detect(video);
-                                if (bc && bc.length > 0 && bc[0].rawValue) {
-                                    _onScanSuccess(bc[0].rawValue);
-                                    return;
-                                }
-                            } catch(e) {}
-                        }
-                        _scanRAF = setTimeout(retryFrame, 200);
-                    }
-                    // Re-open stream
-                    navigator.mediaDevices.getUserMedia({
-                        video: { facingMode: { ideal: 'environment' } }, audio: false
-                    }).then(stream => {
-                        _scanStream = stream;
-                        video.srcObject = stream;
-                        video.play().then(retryFrame).catch(retryFrame);
-                    }).catch(() => {});
-                }
+                if (!document.getElementById('scan-modal').classList.contains('active')) return;
+                status.textContent = '🔍 מחפש ברקוד...';
+                status.className   = '';
+                document.getElementById('qr-reader').innerHTML = '';
+                _startScanner();
             }, 2500);
             return;
         }
 
-        // Found!
+        // נמצא!
         status.textContent = `✅ נמצא: ${found.name}  |  במלאי: ${found.qty}`;
         status.className   = 'ok';
 
         setTimeout(() => {
             closeScanner();
+
             const searchEl = document.getElementById('u-search');
             if (searchEl) searchEl.value = '';
             renderUser('');
 
             setTimeout(() => {
-                const cards = document.querySelectorAll('.item-card');
-                for (const card of cards) {
+                document.querySelectorAll('.item-card').forEach(card => {
                     const nameEl = card.querySelector('.item-name');
                     if (nameEl && nameEl.textContent.trim() === found.name.trim()) {
                         card.classList.add('found-highlight');
@@ -2420,9 +2332,8 @@ async function _onScanSuccess(code) {
                         const inp = card.querySelector('.quick-input');
                         if (inp) { inp.focus(); inp.select(); }
                         setTimeout(() => card.classList.remove('found-highlight'), 3500);
-                        break;
                     }
-                }
+                });
                 showToast(`✅ נמצא: ${found.name}  (במלאי: ${found.qty})`);
             }, 200);
         }, 1200);
@@ -2431,19 +2342,22 @@ async function _onScanSuccess(code) {
     _scanMode = _scanItemId = _scanItemEl = null;
 }
 
-function _stopStream() {
-    if (_scanStream) {
-        _scanStream.getTracks().forEach(t => t.stop());
-        _scanStream = null;
+async function _stopScanner() {
+    if (_scanner) {
+        try {
+            const state = _scanner.getState();
+            // state 2 = SCANNING, state 3 = PAUSED
+            if (state === 2 || state === 3) {
+                await _scanner.stop();
+            }
+            _scanner.clear();
+        } catch (e) { /* ignore */ }
+        _scanner = null;
     }
-    const video = document.getElementById('scan-video');
-    if (video) video.srcObject = null;
 }
 
-function closeScanner() {
-    _scanRunning = false;
-    if (_scanRAF) { clearTimeout(_scanRAF); _scanRAF = null; }
-    _stopStream();
+async function closeScanner() {
+    await _stopScanner();
     document.getElementById('scan-modal').classList.remove('active');
     _scanMode = _scanItemId = _scanItemEl = null;
 }
