@@ -1642,6 +1642,10 @@ tr:hover td { background: var(--bg); }
             <input type="number" id="n-min" class="app-input" placeholder="מינימום (סף)" min="0" style="width:130px;margin-bottom:0;">
             <input type="text" id="n-barcode" class="app-input" placeholder="📦 ברקוד (אופציונלי)" autocomplete="off" style="flex:1;margin-bottom:0;">
           </div>
+          <div class="input-row" style="margin-top:0;">
+            <input type="text" id="n-madanet-id"   class="app-input" placeholder='מזהה מד"אנט (אופציונלי)' autocomplete="off" style="width:160px;margin-bottom:0;">
+            <input type="text" id="n-madanet-name" class="app-input" placeholder='שם מד"אנט (אופציונלי)'  autocomplete="off" style="flex:1;margin-bottom:0;">
+          </div>
           <button class="btn btn-blue" style="margin-top:10px;" onclick="addItem()">➕ הוסף למלאי</button>
         </div>
 
@@ -1658,7 +1662,7 @@ tr:hover td { background: var(--bg); }
             <div class="ip-text" id="ip-text">מייבא...</div>
           </div>
           <div style="font-size:.76em;color:var(--text-muted);margin-top:6px;">
-            פורמט CSV: שם, קטגוריה, כמות, מינימום (אופציונלי), ברקוד (אופציונלי)
+            פורמט CSV: שם, קטגוריה, כמות, מינימום, ברקוד, מזהה מד"אנט, שם מד"אנט
           </div>
         </div>
 
@@ -2539,9 +2543,10 @@ function renderUser() {
 
     if (q) {
       const nm = i.name.toLowerCase();
-      const ct = (i.category || '').toLowerCase();
-      const bc = (i.barcode   || '').toLowerCase();
-      if (!nm.includes(q) && !ct.includes(q) && !bc.includes(q)) return;
+      const ct = (i.category     || '').toLowerCase();
+      const bc = (i.barcode      || '').toLowerCase();
+      const mi = String(i.madanet_id  || '').toLowerCase();
+      if (!nm.includes(q) && !ct.includes(q) && !bc.includes(q) && !mi.includes(q)) return;
     }
 
     const cat = (i.category && i.category.trim()) ? i.category.trim() : 'כללי';
@@ -2675,9 +2680,11 @@ function renderAdmin() {
     if (!i || !i.id || typeof i.name !== 'string' || !i.name.trim()) return false;
     if (q) {
       const nm = i.name.toLowerCase();
-      const ct = (i.category || '').toLowerCase();
-      const bc = (i.barcode   || '').toLowerCase();
-      if (!nm.includes(q) && !ct.includes(q) && !bc.includes(q)) return false;
+      const ct = (i.category     || '').toLowerCase();
+      const bc = (i.barcode      || '').toLowerCase();
+      const mi = String(i.madanet_id  || '').toLowerCase();
+      const mn = (i.madanet_name || '').toLowerCase();
+      if (!nm.includes(q) && !ct.includes(q) && !bc.includes(q) && !mi.includes(q) && !mn.includes(q)) return false;
     }
     const qty = Number.isFinite(i.qty) ? i.qty : 0;
     const thr = getThreshold(i);
@@ -2746,6 +2753,9 @@ function buildAdminItem(i) {
           ${i.barcode
             ? `<span class="barcode-tag has-bc">📦 ${esc(i.barcode)}</span>`
             : `<span class="barcode-tag no-bc">ללא ברקוד</span>`}
+          ${i.madanet_id
+            ? `<span class="barcode-tag has-bc" style="background:#e3f2fd;color:#0277bd;" title="${esc(i.madanet_name||'')}">מד"אנט: ${esc(i.madanet_id)}</span>`
+            : ''}
         </div>
       </div>
       <input type="number" class="ai-qty-input" value="${qty}" min="0">
@@ -2955,9 +2965,11 @@ async function addItem() {
   const name      = (document.getElementById('n-name').value    || '').trim();
   const category  = (document.getElementById('n-cat').value     || '').trim();
   const qty       = parseInt(document.getElementById('n-qty').value, 10)    || 0;
-  const barcode   = (document.getElementById('n-barcode').value  || '').trim();
-  const minQtyRaw = document.getElementById('n-min').value;
-  const minQty    = minQtyRaw ? parseInt(minQtyRaw, 10) : undefined;
+  const barcode      = (document.getElementById('n-barcode').value      || '').trim();
+  const madanetId   = (document.getElementById('n-madanet-id')?.value   || '').trim();
+  const madanetName = (document.getElementById('n-madanet-name')?.value  || '').trim();
+  const minQtyRaw   = document.getElementById('n-min').value;
+  const minQty      = minQtyRaw ? parseInt(minQtyRaw, 10) : undefined;
 
   if (!name || !category)  return showToast('שם וקטגוריה הם שדות חובה', 'error');
   if (qty < 0)             return showToast('כמות לא תקינה', 'error');
@@ -2971,7 +2983,9 @@ async function addItem() {
   try {
     const ref = db.ref('inventory').push();
     const data = { name, category, qty: 0 };
-    if (barcode) data.barcode = barcode;
+    if (barcode)      data.barcode      = barcode;
+    if (madanetId)    data.madanet_id   = madanetId;
+    if (madanetName)  data.madanet_name = madanetName;
     if (Number.isFinite(minQty) && minQty >= 0) data.minQty = minQty;
     await ref.set(data);
 
@@ -2982,7 +2996,7 @@ async function addItem() {
       showToast(`✓ הפריט "${name}" נוסף`);
     }
 
-    ['n-name','n-cat','n-qty','n-barcode','n-min'].forEach(id => {
+    ['n-name','n-cat','n-qty','n-barcode','n-min','n-madanet-id','n-madanet-name'].forEach(id => {
       const el = document.getElementById(id);
       if (el) el.value = '';
     });
@@ -3030,10 +3044,12 @@ async function handleCsvUpload(input) {
       for (let idx = 1; idx < lines.length; idx++) {
         const parts = lines[idx].split(',');
         if (parts.length < 3) continue;
-        const n = parts[0].trim(), c = parts[1].trim();
-        const q = parseInt(parts[2], 10) || 0;
-        const m = parts[3] ? parseInt(parts[3], 10) : undefined;
-        const bc= (parts[4] || '').trim();
+        const n    = parts[0].trim(), c = parts[1].trim();
+        const q    = parseInt(parts[2], 10) || 0;
+        const m    = parts[3] ? parseInt(parts[3], 10) : undefined;
+        const bc   = (parts[4] || '').trim();
+        const mid  = (parts[5] || '').trim();
+        const mname= (parts[6] || '').trim();
         if (!n || !c) continue;
 
         const ex = inv.find(i => i.name.toLowerCase() === n.toLowerCase());
@@ -3042,14 +3058,18 @@ async function handleCsvUpload(input) {
           if (diff !== 0) await changeQuantity({ itemId:ex.id, delta:diff, user:window.curU||'CSV', reason:'ייבוא CSV', action:diff>0?'add':'sub' });
           const upd = { category: c, name: n };
           if (Number.isFinite(m) && m >= 0) upd.minQty = m;
-          if (bc) upd.barcode = bc;
+          if (bc)    upd.barcode      = bc;
+          if (mid)   upd.madanet_id   = mid;
+          if (mname) upd.madanet_name = mname;
           await db.ref('inventory/' + ex.id).update(upd);
           updated++;
         } else {
-          const ref = db.ref('inventory').push();
+          const ref  = db.ref('inventory').push();
           const data = { name:n, category:c, qty:0 };
           if (Number.isFinite(m) && m >= 0) data.minQty = m;
-          if (bc) data.barcode = bc;
+          if (bc)    data.barcode      = bc;
+          if (mid)   data.madanet_id   = mid;
+          if (mname) data.madanet_name = mname;
           await ref.set(data);
           if (q > 0) await changeQuantity({ itemId:ref.key, delta:q, user:window.curU||'CSV', reason:'כמות התחלתית (CSV)', action:'add' });
           imported++;
@@ -3075,10 +3095,17 @@ async function handleCsvUpload(input) {
 }
 
 function downloadInv() {
-  let csv = '\uFEFFשם,קטגוריה,כמות,מינימום,ברקוד\n';
+  let csv = '\uFEFFשם,קטגוריה,כמות,מינימום,ברקוד,מזהה מד"אנט,שם מד"אנט\n';
   inv.forEach(i => {
-    csv += [csvSafe(i.name), csvSafe(i.category), i.qty ?? 0,
-            i.minQty ?? '', csvSafe(i.barcode || '')].join(',') + '\n';
+    csv += [
+      csvSafe(i.name),
+      csvSafe(i.category),
+      i.qty ?? 0,
+      i.minQty ?? '',
+      csvSafe(i.barcode       || ''),
+      csvSafe(i.madanet_id    || ''),
+      csvSafe(i.madanet_name  || '')
+    ].join(',') + '\n';
   });
   dlFile(csv, `inventory_mda_${dateStamp()}.csv`, 'text/csv');
 }
@@ -3145,23 +3172,36 @@ function downloadReportCSV() {
    ================================================================ */
 function buildLogCache() {
   _logRows = [...logs].reverse().map(l => {
-    const action = l.action || 'take';
-    const amount = Number.isFinite(l.amount) ? l.amount : Math.abs(l.delta || 0);
-    const taken = (action === 'take' || action === 'sub' || (action === 'manual' && (l.delta||0) < 0)) ? amount : '';
-    const added = (action === 'add' || (action === 'manual' && (l.delta||0) > 0)) ? amount : '';
+    // Old logs (before v2) had no 'action' field — they were always 'take'
+    // Also support old 'itemName' field name
+    const itemName = l.item || l.itemName || '';
+    const action   = l.action || 'take';   // default to 'take' for old logs
+    const amount   = Number.isFinite(l.amount) ? l.amount : Math.abs(l.delta || 0);
+
+    // Determine direction:
+    // - 'take' / 'sub' = items left the warehouse = show in "נלקח"
+    // - 'add'          = items entered            = show in "התווסף"
+    // - 'manual'       = depends on delta sign
+    const isTake = action === 'take' || action === 'sub' ||
+                   (action === 'manual' && (l.delta||0) < 0);
+    const isAdd  = action === 'add' ||
+                   (action === 'manual' && (l.delta||0) > 0);
+    const taken  = isTake ? amount : '';
+    const added  = isAdd  ? amount : '';
+
     return {
       html: `<tr>
         <td style="color:var(--text-muted);font-size:.82em;white-space:nowrap;">${esc(l.date||'')}</td>
         <td class="ut">${esc(l.user||'')}</td>
-        <td><b>${esc(l.item||l.itemName||'')}</b></td>
+        <td><b>${esc(itemName)}</b></td>
         <td>${taken ? `<span class="bt">${taken}</span>` : ''}</td>
         <td>${added ? `<span class="bg">${added}</span>` : ''}</td>
-        <td><b>${l.qty_before??'-'}</b></td>
-        <td><b>${l.qty_after??'-'}</b></td>
+        <td><b>${l.qty_before ?? '-'}</b></td>
+        <td><b>${l.qty_after  ?? '-'}</b></td>
         <td style="text-align:right;font-size:.8em;">${esc(l.reason||'-')}</td>
       </tr>`,
-      user:   (l.user  ||'').toLowerCase(),
-      item:   (l.item  ||l.itemName||'').toLowerCase(),
+      user:   (l.user    ||'').toLowerCase(),
+      item:   itemName.toLowerCase(),
       action: action
     };
   });
@@ -3176,6 +3216,7 @@ function filterLogs() {
     if (fUser   && !r.user.includes(fUser))   return false;
     if (fItem   && !r.item.includes(fItem))   return false;
     if (fAction !== 'all') {
+      // 'take' filter includes old logs (no action field, defaulted to 'take') and 'sub'
       if (fAction === 'take'   && r.action !== 'take' && r.action !== 'sub') return false;
       if (fAction === 'add'    && r.action !== 'add')    return false;
       if (fAction === 'manual' && r.action !== 'manual') return false;
@@ -3194,13 +3235,16 @@ function filterLogs() {
 function downloadLogs() {
   let csv = '\uFEFFתאריך,משתמש,פריט,נלקח,התווסף,לפני,אחרי,סיבה\n';
   [...logs].reverse().forEach(l => {
-    const action = l.action || 'take';
-    const amount = Number.isFinite(l.amount) ? l.amount : Math.abs(l.delta || 0);
+    const itemName = l.item || l.itemName || '';
+    const action   = l.action || 'take';
+    const amount   = Number.isFinite(l.amount) ? l.amount : Math.abs(l.delta || 0);
+    const isTake   = action === 'take' || action === 'sub' || (action === 'manual' && (l.delta||0) < 0);
+    const isAdd    = action === 'add'  || (action === 'manual' && (l.delta||0) > 0);
     csv += [
       csvSafe(l.date), csvSafe(l.user),
-      csvSafe(l.item || l.itemName),
-      csvSafe((action === 'take' || action === 'sub') ? amount : ''),
-      csvSafe(action === 'add' ? amount : ''),
+      csvSafe(itemName),
+      csvSafe(isTake ? amount : ''),
+      csvSafe(isAdd  ? amount : ''),
       csvSafe(l.qty_before ?? ''),
       csvSafe(l.qty_after  ?? ''),
       csvSafe(l.reason)
