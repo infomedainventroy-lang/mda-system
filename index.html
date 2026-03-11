@@ -99,6 +99,60 @@ body {
 .sr-only { position:absolute; width:1px; height:1px; overflow:hidden; clip:rect(0,0,0,0); }
 
 /* ================================================================
+   INTRO SPLASH — DEFCON SIREN
+   ================================================================ */
+#intro-splash {
+  position:fixed;inset:0;z-index:99999;background:#000;overflow:hidden;
+}
+#splash-c { position:absolute;inset:0;width:100%;height:100%; }
+/* CRT scanlines */
+#intro-splash::before {
+  content:'';position:absolute;inset:0;pointer-events:none;z-index:8;
+  background:repeating-linear-gradient(0deg,transparent,transparent 3px,rgba(0,0,0,.12) 3px,rgba(0,0,0,.12) 4px);
+}
+/* Logo DOM layer */
+#sp-logo {
+  position:absolute;top:50%;left:50%;transform:translate(-50%,-50%) scale(0);
+  z-index:10;display:flex;flex-direction:column;align-items:center;
+  pointer-events:none;opacity:0;
+}
+#sp-logo img { width:140px;height:auto;
+  filter:drop-shadow(0 0 40px #fff) drop-shadow(0 0 80px #d32f2f);
+}
+#sp-logo .sp-t1 {
+  font-family:'Heebo',sans-serif;font-size:1.35em;font-weight:900;
+  color:#fff;letter-spacing:.1em;margin-top:16px;
+  text-shadow:0 0 25px rgba(255,255,255,.6);
+  opacity:0;transform:translateY(12px);transition:opacity .4s ease,transform .4s ease;
+}
+#sp-logo .sp-t2 {
+  font-family:'Heebo',sans-serif;font-size:.75em;font-weight:700;
+  color:#d32f2f;letter-spacing:.35em;text-transform:uppercase;
+  text-shadow:0 0 18px rgba(211,47,47,.8);margin-top:6px;
+  opacity:0;transform:translateY(8px);transition:opacity .4s ease .12s,transform .4s ease .12s;
+}
+#sp-logo.show { animation:spLogoIn .5s cubic-bezier(.12,1.6,.5,1) forwards; }
+#sp-logo.show .sp-t1,#sp-logo.show .sp-t2 { opacity:1;transform:translateY(0); }
+@keyframes spLogoIn {
+  0%  {opacity:0;transform:translate(-50%,-50%) scale(4);filter:blur(28px) brightness(6)}
+  55% {opacity:1;transform:translate(-50%,-50%) scale(.9);filter:blur(0) brightness(2)}
+  75% {transform:translate(-50%,-50%) scale(1.06)}
+  100%{opacity:1;transform:translate(-50%,-50%) scale(1);filter:brightness(1)}
+}
+/* Exit wipe — split reveal */
+#sp-wipe-t,#sp-wipe-b{
+  position:absolute;left:0;right:0;height:50%;background:#000;
+  z-index:20;pointer-events:none;
+}
+#sp-wipe-t{top:0;transform-origin:top;transform:scaleY(0);}
+#sp-wipe-b{bottom:0;transform-origin:bottom;transform:scaleY(0);}
+#intro-splash.sp-exit #sp-wipe-t{animation:spWipe .5s cubic-bezier(.7,0,1,.7) forwards;}
+#intro-splash.sp-exit #sp-wipe-b{animation:spWipe .5s cubic-bezier(.7,0,1,.7) .06s forwards;}
+@keyframes spWipe{to{transform:scaleY(1);}}
+#intro-splash.sp-exit{animation:spDie .1s ease .6s forwards;}
+@keyframes spDie{to{opacity:0;}}
+
+/* ================================================================
    TICKER STRIP
    ================================================================ */
 .ticker-bar {
@@ -1699,6 +1753,21 @@ tr:hover td { background: var(--bg); }
 <!-- ================================================================
      LOGIN PAGE
      ================================================================ -->
+
+<!-- ================================================================
+     INTRO SPLASH — DEFCON SIREN
+     ================================================================ -->
+<div id="intro-splash">
+  <canvas id="splash-c"></canvas>
+  <div id="sp-logo">
+    <img id="sp-logo-img" src="" alt="לוגו">
+    <div class="sp-t1">מערכת ניהול מלאי</div>
+    <div class="sp-t2">מגן דוד אדום</div>
+  </div>
+  <div id="sp-wipe-t"></div>
+  <div id="sp-wipe-b"></div>
+</div>
+
 <div id="scr-login" class="login-page">
 
   <div class="login-logo-wrap">
@@ -1872,7 +1941,7 @@ tr:hover td { background: var(--bg); }
             <div class="ip-text" id="ip-text">מייבא...</div>
           </div>
           <div style="font-size:.76em;color:var(--text-muted);margin-top:6px;">
-            פורמט CSV: שם, קטגוריה, כמות, מינימום, ברקוד, מזהה מד"אנט, שם מד"אנט
+            פורמט CSV:(אופציונלי) קטגוריה, שם, כמות, מינימום, ברקוד (אופציונלי), מזהה מד"אנט (אופציונלי), שם מד"אנט
           </div>
         </div>
 
@@ -2238,6 +2307,508 @@ document.addEventListener('DOMContentLoaded', () => {
   document.getElementById('site-logo').src = CFG.logoUrl;
   document.getElementById('header-logo').src = CFG.logoUrl;
   document.getElementById('site-header').textContent = CFG.headerText;
+
+  // ── DEFCON SIREN INTRO ───────────────────────────────────────
+  (function runSplash() {
+    const splash  = document.getElementById('intro-splash');
+    const canvas  = document.getElementById('splash-c');
+    const logoWrap= document.getElementById('sp-logo');
+    const logoImg = document.getElementById('sp-logo-img');
+    if (logoImg) logoImg.src = CFG.logoUrl;
+
+    let W = canvas.width  = window.innerWidth;
+    let H = canvas.height = window.innerHeight;
+    window.addEventListener('resize', () => {
+      W = canvas.width  = window.innerWidth;
+      H = canvas.height = window.innerHeight;
+    });
+    const g = canvas.getContext('2d');
+
+    // ── AUDIO ENGINE ─────────────────────────────────────────────
+    // Works on desktop automatically; on mobile unlocks on first touch
+    let AC = null;
+    function getAC() {
+      if (!AC) {
+        AC = new (window.AudioContext || window.webkitAudioContext)();
+      }
+      if (AC.state === 'suspended') AC.resume();
+      return AC;
+    }
+    // Unlock on first interaction (for mobile)
+    function unlockAudio() {
+      try { getAC(); } catch(e){}
+    }
+    document.addEventListener('touchstart', unlockAudio, {once:true, passive:true});
+    document.addEventListener('mousedown',  unlockAudio, {once:true, passive:true});
+
+    function mkNoise(c, sec) {
+      const b = c.createBuffer(1, c.sampleRate*sec, c.sampleRate);
+      const d = b.getChannelData(0);
+      for (let i=0;i<d.length;i++) d[i]=Math.random()*2-1;
+      return b;
+    }
+    function tone(freq, type, start, dur, vol, dest, c) {
+      const o=c.createOscillator(), gn=c.createGain();
+      o.type=type; o.frequency.value=freq;
+      gn.gain.setValueAtTime(vol, start);
+      gn.gain.exponentialRampToValueAtTime(0.0001, start+dur);
+      o.connect(gn); gn.connect(dest); o.start(start); o.stop(start+dur+.05);
+    }
+    function toneSlide(f0, f1, type, start, dur, vol, dest, c) {
+      const o=c.createOscillator(), gn=c.createGain();
+      o.type=type;
+      o.frequency.setValueAtTime(f0, start);
+      o.frequency.exponentialRampToValueAtTime(f1, start+dur);
+      gn.gain.setValueAtTime(vol, start);
+      gn.gain.exponentialRampToValueAtTime(0.0001, start+dur);
+      o.connect(gn); gn.connect(dest); o.start(start); o.stop(start+dur+.05);
+    }
+
+    const SFX = {
+      // Ambulance siren — alternating two tones, ramping up
+      siren(dur) {
+        try {
+          const c=getAC(), now=c.currentTime;
+          const master=c.createGain(); master.gain.value=0.0001;
+          master.gain.linearRampToValueAtTime(.55, now+.8);
+          master.connect(c.destination);
+          const hiF=880, loF=660;
+          for (let t=0; t<dur; t+=.5) {
+            const isHi=(Math.floor(t/.5)%2===0);
+            const o=c.createOscillator(), gn=c.createGain();
+            o.type='sawtooth';
+            o.frequency.setValueAtTime(isHi?loF:hiF, now+t);
+            o.frequency.linearRampToValueAtTime(isHi?hiF:loF, now+t+.45);
+            gn.gain.setValueAtTime(.6,now+t); gn.gain.setValueAtTime(.6,now+t+.44); gn.gain.setValueAtTime(0,now+t+.5);
+            const flt=c.createBiquadFilter(); flt.type='bandpass'; flt.frequency.value=900; flt.Q.value=.8;
+            o.connect(flt); flt.connect(gn); gn.connect(master);
+            o.start(now+t); o.stop(now+t+.52);
+          }
+        } catch(e){}
+      },
+      // Deep heartbeat pulse
+      heartbeat(t) {
+        try {
+          const c=getAC(), now=c.currentTime+t;
+          const m=c.createGain(); m.gain.value=.7; m.connect(c.destination);
+          // Thump 1
+          toneSlide(180,30,'sine',now,.18,.9,m,c);
+          // Thump 2 (after 0.2s)
+          toneSlide(200,35,'sine',now+.2,.16,.7,m,c);
+        } catch(e){}
+      },
+      // EKG flatline then spike
+      ekgBeep(t) {
+        try {
+          const c=getAC(), now=c.currentTime+t;
+          const m=c.createGain(); m.gain.value=.5; m.connect(c.destination);
+          tone(1200,'sine',now,.06,.6,m,c);
+          tone(1800,'sine',now+.02,.04,.3,m,c);
+        } catch(e){}
+      },
+      // MASSIVE BOOM — logo impact
+      boom() {
+        try {
+          const c=getAC(), m=c.createGain(); m.gain.value=.9; m.connect(c.destination);
+          const now=c.currentTime;
+          // Sub kick
+          const k=c.createOscillator(), kg=c.createGain();
+          k.type='sine';
+          k.frequency.setValueAtTime(200,now); k.frequency.exponentialRampToValueAtTime(20,now+.6);
+          kg.gain.setValueAtTime(1,now); kg.gain.exponentialRampToValueAtTime(.0001,now+.65);
+          k.connect(kg); kg.connect(m); k.start(now); k.stop(now+.7);
+          // Distorted mid
+          const d=c.createOscillator(), dg=c.createGain(), ws=c.createWaveShaper();
+          const cv=new Float32Array(512); for(let i=0;i<512;i++){const x=i*2/512-1; cv[i]=x<0?-Math.pow(-x,.5):Math.pow(x,.5);}
+          ws.curve=cv; d.type='sawtooth'; d.frequency.value=80;
+          dg.gain.setValueAtTime(.5,now); dg.gain.exponentialRampToValueAtTime(.0001,now+.4);
+          d.connect(ws); ws.connect(dg); dg.connect(m); d.start(now); d.stop(now+.5);
+          // Noise explosion
+          const n=c.createBufferSource(); n.buffer=mkNoise(c,.8);
+          const nf1=c.createBiquadFilter(); nf1.type='lowpass'; nf1.frequency.value=4000;
+          const ng=c.createGain();
+          ng.gain.setValueAtTime(.7,now); ng.gain.exponentialRampToValueAtTime(.0001,now+.7);
+          n.connect(nf1); nf1.connect(ng); ng.connect(m); n.start(now);
+          // Shimmer
+          tone(3500,'sine',now,.3,.15,m,c);
+          tone(6000,'sine',now,.2,.07,m,c);
+          // Distant reverb
+          setTimeout(()=>{try{
+            const c2=getAC(), n2=c2.createBufferSource(); n2.buffer=mkNoise(c2,1.5);
+            const f2=c2.createBiquadFilter(); f2.type='bandpass'; f2.frequency.value=400; f2.Q.value=.2;
+            const g2=c2.createGain(); const t2=c2.currentTime;
+            g2.gain.setValueAtTime(.06,t2); g2.gain.exponentialRampToValueAtTime(.0001,t2+1.3);
+            n2.connect(f2); f2.connect(g2); g2.connect(c2.destination); n2.start(t2);
+          }catch(e){}},50);
+        } catch(e){}
+      },
+      // Cinematic power-up sweep (for siren fade → logo)
+      powerUp() {
+        try {
+          const c=getAC(), m=c.createGain(); m.gain.value=.4; m.connect(c.destination);
+          const now=c.currentTime;
+          toneSlide(60,2400,'sawtooth',now,.7,.35,m,c);
+          toneSlide(90,1200,'sine',now+.1,.65,.2,m,c);
+          // Harmonics
+          [120,240,480].forEach((f,i)=>tone(f,'sine',now+i*.05,.5,.06,m,c));
+        } catch(e){}
+      },
+      // Exit whoosh
+      whoosh() {
+        try {
+          const c=getAC(), m=c.createGain(); m.gain.value=.5; m.connect(c.destination);
+          const now=c.currentTime;
+          const n=c.createBufferSource(); n.buffer=mkNoise(c,.7);
+          const nf=c.createBiquadFilter(); nf.type='bandpass';
+          nf.frequency.setValueAtTime(5000,now); nf.frequency.exponentialRampToValueAtTime(80,now+.6);
+          nf.Q.value=1.5;
+          const ng=c.createGain();
+          ng.gain.setValueAtTime(.0001,now); ng.gain.linearRampToValueAtTime(.6,now+.06);
+          ng.gain.exponentialRampToValueAtTime(.0001,now+.65);
+          n.connect(nf); nf.connect(ng); ng.connect(m); n.start(now);
+          tone(45,'sine',now+.3,.4,.5,m,c);
+        } catch(e){}
+      }
+    };
+
+    // ── VISUAL STATE ─────────────────────────────────────────────
+    let t = 0; // elapsed frames
+    let shakeAmt = 0;
+    let particles = [];
+    let rings = [];       // shockwave rings
+    let sirenAngle = 0;
+    let sirenPhase = 0;   // 0=growing, 1=spinning, 2=fading
+    let sirenAlpha = 0;
+    let bgAlpha = 0;
+    let logoVisible = false;
+    let exiting = false;
+    let raf;
+
+    // EKG data
+    let ekgProgress = 0; // 0→1
+    let ekgActive = false;
+    let ekgAlpha = 0;
+    const EKG_PTS = (() => {
+      // One dramatic PQRST complex across full width
+      const pts = [];
+      const add = (xf,yf) => pts.push([xf,yf]);
+      add(0,.5); add(.08,.5); add(.12,.42); add(.15,.58); add(.18,.5);
+      add(.28,.5); add(.32,.15); add(.35,.95); add(.38,.1); add(.42,.55); add(.46,.5);
+      add(.55,.5); add(.59,.44); add(.62,.56); add(.65,.5);
+      add(.75,.5); add(.79,.42); add(.82,.58); add(.85,.5);
+      add(1,.5);
+      return pts;
+    })();
+
+    // Star of David path
+    let starProgress = 0;
+    let starActive = false;
+    let starAlpha = 0;
+    const STAR_VERTS = (() => {
+      // Two overlapping triangles = Star of David
+      const pts = [], R=1, r=R*.57;
+      // Triangle 1 (points up)
+      for(let i=0;i<3;i++) { const a=-Math.PI/2+i*Math.PI*2/3; pts.push([Math.cos(a)*R,Math.sin(a)*R]); }
+      pts.push(pts[0]); // close
+      // move to triangle 2 start
+      for(let i=0;i<3;i++) { const a=Math.PI/2+i*Math.PI*2/3; pts.push([Math.cos(a)*R,Math.sin(a)*R]); }
+      pts.push(pts[4]); // close
+      return pts;
+    })();
+
+    // Helper: interpolate along polyline
+    function getPolyPoint(pts, progress) {
+      // total length
+      let total=0;
+      for(let i=1;i<pts.length;i++){
+        const dx=pts[i][0]-pts[i-1][0], dy=pts[i][1]-pts[i-1][1];
+        total+=Math.sqrt(dx*dx+dy*dy);
+      }
+      let target=total*progress, acc=0;
+      for(let i=1;i<pts.length;i++){
+        const dx=pts[i][0]-pts[i-1][0], dy=pts[i][1]-pts[i-1][1];
+        const seg=Math.sqrt(dx*dx+dy*dy);
+        if(acc+seg>=target){
+          const frac=(target-acc)/seg;
+          return [pts[i-1][0]+dx*frac, pts[i-1][1]+dy*frac];
+        }
+        acc+=seg;
+      }
+      return pts[pts.length-1];
+    }
+
+    function addShake(s){ shakeAmt=Math.max(shakeAmt,s); }
+
+    function spawnBurst(x,y,count,fast) {
+      const cols=['#d32f2f','#ff5252','#ff8a80','#1a6eb5','#2196f3','#ffffff','#ffd740','#69f0ae'];
+      for(let i=0;i<count;i++){
+        const a=Math.random()*Math.PI*2;
+        const spd=(fast?5:1.5)+Math.random()*(fast?14:4);
+        particles.push({
+          x,y,vx:Math.cos(a)*spd,vy:Math.sin(a)*spd,
+          life:1, decay:(fast?.011:.006)+Math.random()*(fast?.018:.01),
+          sz:(fast?2:1)+Math.random()*(fast?5:2.5),
+          col:cols[Math.floor(Math.random()*cols.length)]
+        });
+      }
+    }
+
+    function addRing(x,y,col){ rings.push({x,y,r:0,life:1,col}); }
+
+    // ── DRAW ──────────────────────────────────────────────────────
+    function draw() {
+      raf = requestAnimationFrame(draw);
+      if(exiting) return;
+      t++;
+      if(shakeAmt>.3) shakeAmt*=.86;
+
+      const sx=(Math.random()-.5)*shakeAmt*2;
+      const sy=(Math.random()-.5)*shakeAmt*2;
+      g.save();
+      g.translate(sx,sy);
+
+      // Background
+      g.globalAlpha=1;
+      g.fillStyle='#000';
+      g.fillRect(-20,-20,W+40,H+40);
+
+      // Bg dark vignette tint
+      if(bgAlpha>0){
+        const bg=g.createRadialGradient(W/2,H/2,0,W/2,H/2,Math.max(W,H)*.7);
+        bg.addColorStop(0,'rgba(10,5,0,.85)');
+        bg.addColorStop(1,'rgba(0,0,0,1)');
+        g.globalAlpha=Math.min(1,bgAlpha);
+        g.fillStyle=bg; g.fillRect(-20,-20,W+40,H+40);
+      }
+
+      // ── SIREN LIGHTS ──────────────────────────────────────────
+      if(sirenAlpha>0){
+        const cx=W/2, cy=H/2;
+        sirenAngle+=.045;
+        g.globalAlpha=sirenAlpha*.9;
+        // Two beams 180° apart, each sweeping
+        [0,Math.PI].forEach((offset,idx)=>{
+          const a=sirenAngle+offset;
+          const col=idx===0?'rgba(211,47,47,':'rgba(30,100,200,';
+          // Beam shape
+          g.save();
+          g.translate(cx,cy);
+          g.rotate(a);
+          const bw=Math.PI/8; // beam width
+          const gr=g.createLinearGradient(0,0,Math.max(W,H)*1.2,0);
+          gr.addColorStop(0,col+'0.6)');
+          gr.addColorStop(.5,col+'0.12)');
+          gr.addColorStop(1,col+'0)');
+          g.beginPath();
+          g.moveTo(0,0);
+          g.arc(0,0,Math.max(W,H)*1.2,-bw/2,bw/2);
+          g.closePath();
+          g.fillStyle=gr;
+          g.shadowColor=col+'0.8)';
+          g.shadowBlur=30;
+          g.fill();
+          // Second thinner bright beam
+          const gr2=g.createLinearGradient(0,0,Math.max(W,H)*.8,0);
+          gr2.addColorStop(0,col+'0.9)');
+          gr2.addColorStop(1,col+'0)');
+          g.beginPath();
+          g.moveTo(0,0);
+          g.arc(0,0,Math.max(W,H)*.8,-bw/6,bw/6);
+          g.closePath();
+          g.fillStyle=gr2;
+          g.shadowBlur=50;
+          g.fill();
+          g.restore();
+        });
+        g.shadowBlur=0;
+      }
+
+      // ── EKG LINE ──────────────────────────────────────────────
+      if(ekgActive&&ekgAlpha>0){
+        const ey=H*.72, margin=W*.06;
+        const ew=W-margin*2;
+        if(ekgProgress<1) ekgProgress=Math.min(1,ekgProgress+.018);
+
+        g.globalAlpha=ekgAlpha;
+        g.strokeStyle='#d32f2f';
+        g.lineWidth=3;
+        g.shadowColor='rgba(211,47,47,.9)';
+        g.shadowBlur=18;
+        g.beginPath();
+        // Draw only up to progress
+        let started=false;
+        for(let i=0;i<EKG_PTS.length-1;i++){
+          const prog0=i/(EKG_PTS.length-1);
+          const prog1=(i+1)/(EKG_PTS.length-1);
+          if(prog0>ekgProgress) break;
+          const frac=Math.min(1,(ekgProgress-prog0)/(prog1-prog0));
+          const px0=margin+EKG_PTS[i][0]*ew,   py0=ey+(EKG_PTS[i][1]-.5)*(H*.35);
+          const px1=margin+EKG_PTS[i+1][0]*ew, py1=ey+(EKG_PTS[i+1][1]-.5)*(H*.35);
+          const px=px0+(px1-px0)*frac, py=py0+(py1-py0)*frac;
+          if(!started){ g.moveTo(px0,py0); started=true; }
+          g.lineTo(px,py);
+        }
+        g.stroke();
+
+        // Glowing dot at head
+        if(ekgProgress<1){
+          const head=getPolyPoint(EKG_PTS.map(p=>[margin+p[0]*ew, ey+(p[1]-.5)*(H*.35)]),ekgProgress);
+          g.beginPath(); g.arc(head[0],head[1],6,0,Math.PI*2);
+          g.fillStyle='#ff5252'; g.shadowBlur=20; g.fill();
+        }
+        g.shadowBlur=0;
+      }
+
+      // ── STAR OF DAVID ─────────────────────────────────────────
+      if(starActive&&starAlpha>0){
+        const cx=W/2, cy=H/2;
+        const R=Math.min(W,H)*.22;
+        if(starProgress<1) starProgress=Math.min(1,starProgress+.012);
+
+        // Spark particles along star
+        if(starProgress<1&&Math.random()<.6){
+          const sp=getPolyPoint(STAR_VERTS.map(v=>[cx+v[0]*R,cy+v[1]*R]),starProgress);
+          spawnBurst(sp[0],sp[1],3,false);
+        }
+
+        g.globalAlpha=starAlpha;
+        g.strokeStyle='rgba(255,220,50,.9)';
+        g.lineWidth=3;
+        g.shadowColor='rgba(255,200,0,.8)';
+        g.shadowBlur=25;
+
+        // Draw star up to progress
+        const mapped=STAR_VERTS.map(v=>[cx+v[0]*R,cy+v[1]*R]);
+        g.beginPath();
+        let drawn=false;
+        for(let i=0;i<mapped.length-1;i++){
+          const prog0=i/(mapped.length-1), prog1=(i+1)/(mapped.length-1);
+          if(prog0>starProgress) break;
+          const frac=Math.min(1,(starProgress-prog0)/(prog1-prog0));
+          const px=mapped[i][0]+(mapped[i+1][0]-mapped[i][0])*frac;
+          const py=mapped[i][1]+(mapped[i+1][1]-mapped[i][1])*frac;
+          if(!drawn){ g.moveTo(mapped[i][0],mapped[i][1]); drawn=true; }
+          g.lineTo(px,py);
+        }
+        g.stroke();
+
+        // Inner glow fill when complete
+        if(starProgress>=.98){
+          g.globalAlpha=starAlpha*.08;
+          g.fillStyle='rgba(255,200,0,1)';
+          g.shadowBlur=60;
+          g.beginPath();
+          mapped.slice(0,4).forEach((p,i)=>i===0?g.moveTo(p[0],p[1]):g.lineTo(p[0],p[1]));
+          g.closePath(); g.fill();
+          g.beginPath();
+          mapped.slice(4).forEach((p,i)=>i===0?g.moveTo(p[0],p[1]):g.lineTo(p[0],p[1]));
+          g.closePath(); g.fill();
+        }
+        g.shadowBlur=0;
+      }
+
+      // ── PARTICLES ─────────────────────────────────────────────
+      particles=particles.filter(p=>p.life>0);
+      particles.forEach(p=>{
+        g.globalAlpha=p.life*.9;
+        g.beginPath(); g.arc(p.x,p.y,p.sz,0,Math.PI*2);
+        g.fillStyle=p.col; g.shadowColor=p.col; g.shadowBlur=8;
+        g.fill();
+        p.x+=p.vx; p.y+=p.vy; p.vy+=.1; p.vx*=.97; p.life-=p.decay;
+      });
+
+      // ── SHOCKWAVE RINGS ───────────────────────────────────────
+      rings=rings.filter(r=>r.life>0);
+      rings.forEach(r=>{
+        g.globalAlpha=r.life*.8;
+        g.strokeStyle=r.col;
+        g.lineWidth=3*(1-r.life*.5);
+        g.shadowColor=r.col; g.shadowBlur=20;
+        g.beginPath(); g.arc(r.x,r.y,r.r,0,Math.PI*2); g.stroke();
+        r.r+=Math.min(W,H)*.025; r.life-=.032;
+      });
+      g.shadowBlur=0;
+      g.globalAlpha=1;
+      g.restore();
+    }
+
+    // ── SEQUENCE ORCHESTRATION ───────────────────────────────────
+    let heartbeatInterval;
+    draw(); // start render loop immediately
+
+    // t=0: dark bg fades in
+    setTimeout(()=>{ bgAlpha=.001; (function fadeBg(){bgAlpha=Math.min(1,bgAlpha+.04); if(bgAlpha<1)setTimeout(fadeBg,20);})(); },50);
+
+
+
+    // t=300ms: heartbeat starts
+    setTimeout(()=>{
+      let hb=0;
+      heartbeatInterval=setInterval(()=>{ SFX.heartbeat(0); hb++; if(hb>=3)clearInterval(heartbeatInterval); },700);
+    },300);
+
+    // t=600ms: EKG appears and draws
+    setTimeout(()=>{
+      ekgActive=true;
+      ekgAlpha=0;
+      (function fadeEkg(){ekgAlpha=Math.min(1,ekgAlpha+.08); if(ekgAlpha<1)setTimeout(fadeEkg,20);})();
+      // EKG beep on the spike
+      setTimeout(()=>SFX.ekgBeep(0),600);
+    },600);
+
+    // t=1100ms: Star of David draws itself
+    setTimeout(()=>{
+      starActive=true;
+      starAlpha=0;
+      (function fadeStar(){starAlpha=Math.min(1,starAlpha+.08); if(starAlpha<1)setTimeout(fadeStar,20);})();
+    },1100);
+
+    // t=2200ms: POWER UP SWEEP → fade siren
+    setTimeout(()=>{
+      SFX.powerUp();
+      // Fade out siren
+      (function fadeSirenOut(){sirenAlpha=Math.max(0,sirenAlpha-.04); if(sirenAlpha>0)setTimeout(fadeSirenOut,25);})();
+      // Fade out EKG
+      (function fadeEkgOut(){ekgAlpha=Math.max(0,ekgAlpha-.06); if(ekgAlpha>0)setTimeout(fadeEkgOut,25);})();
+      // Fade out star
+      (function fadeStarOut(){starAlpha=Math.max(0,starAlpha-.05); if(starAlpha>0)setTimeout(fadeStarOut,25);})();
+    },2200);
+
+    // t=2700ms: LOGO SLAM + BOOM
+    setTimeout(()=>{
+      SFX.boom();
+      addShake(28);
+      // Flash
+      const fl=document.createElement('div');
+      fl.style.cssText='position:absolute;inset:0;background:#fff;z-index:9;pointer-events:none;';
+      splash.appendChild(fl);
+      requestAnimationFrame(()=>requestAnimationFrame(()=>{
+        fl.style.transition='opacity .4s ease'; fl.style.opacity='0';
+        setTimeout(()=>fl.remove(),450);
+      }));
+      // Particle burst
+      spawnBurst(W/2,H/2,220,true);
+      // Shockwaves
+      setTimeout(()=>addRing(W/2,H/2,'rgba(211,47,47,.9)'),0);
+      setTimeout(()=>addRing(W/2,H/2,'rgba(26,110,181,.8)'),130);
+      setTimeout(()=>addRing(W/2,H/2,'rgba(255,255,255,.6)'),260);
+      // Logo
+      logoWrap.classList.add('show');
+    },2700);
+
+    // t=4200ms: ambient particle drizzle then exit
+    setTimeout(()=>{
+      spawnBurst(W/2,H*.4,40,false);
+      SFX.whoosh();
+      exiting=true;
+      splash.classList.add('sp-exit');
+      setTimeout(()=>{ cancelAnimationFrame(raf); splash.style.display='none'; },700);
+    },4200);
+
+  })();
+  // ── END DEFCON SIREN ─────────────────────────────────────────
+  // ── END BOOT SEQUENCE ─────────────────────────────────────────
+
 
   // Tech info
   const infoSite = document.getElementById('info-site');
