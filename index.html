@@ -7,7 +7,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <script>
-  const APP_VERSION = "1.07";
+  const APP_VERSION = "1.08";
   const APP_BUILD_TS = Date.now();
 </script>
 <title id="page-title">מערכת מלאי מד"א</title>
@@ -173,26 +173,39 @@ body {
 }
 
 .login-tagline {
-  color: rgba(255,255,255,.35);
+  color: rgba(255,255,255,.38);
   font-size: .78em;
   margin-top: 10px;
   letter-spacing: .1em;
   text-transform: uppercase;
 }
 
+.login-version-badge {
+  display: inline-block;
+  margin-top: 10px;
+  background: rgba(255,255,255,.08);
+  border: 1px solid rgba(255,255,255,.14);
+  border-radius: var(--r-full);
+  padding: 3px 12px;
+  font-size: .69em;
+  color: rgba(255,255,255,.4);
+  letter-spacing: .08em;
+  font-weight: 600;
+}
+
 .login-card {
   z-index: 2;
   width: 100%;
   max-width: 390px;
-  background: rgba(255,255,255,.06);
-  backdrop-filter: blur(24px) saturate(180%);
-  -webkit-backdrop-filter: blur(24px) saturate(180%);
-  border: 1px solid rgba(255,255,255,.12);
+  background: rgba(255,255,255,.08);
+  backdrop-filter: blur(28px) saturate(200%);
+  -webkit-backdrop-filter: blur(28px) saturate(200%);
+  border: 1px solid rgba(255,255,255,.16);
   border-radius: var(--r-xl);
-  padding: 30px 26px;
+  padding: 32px 28px;
   margin-bottom: 16px;
   animation: fadeUp .5s var(--ease) both;
-  box-shadow: 0 8px 40px rgba(0,0,0,.25), inset 0 1px 0 rgba(255,255,255,.08);
+  box-shadow: 0 8px 40px rgba(0,0,0,.3), inset 0 1px 0 rgba(255,255,255,.12), inset 0 -1px 0 rgba(0,0,0,.08);
 }
 
 .login-card:nth-child(3) { animation-delay: .12s; }
@@ -232,20 +245,20 @@ body {
 .login-input {
   width: 100%;
   padding: 13px 44px 13px 14px;
-  border: 1.5px solid rgba(255,255,255,.14);
+  border: 1.5px solid rgba(255,255,255,.18);
   border-radius: var(--r-sm);
   font-size: 15px;
   font-family: 'Heebo', sans-serif;
-  background: rgba(255,255,255,.09);
+  background: rgba(255,255,255,.1);
   color: white;
   transition: var(--tr);
   outline: none;
 }
-.login-input::placeholder { color: rgba(255,255,255,.3); }
+.login-input::placeholder { color: rgba(255,255,255,.35); }
 .login-input:focus {
-  border-color: rgba(255,255,255,.35);
-  background: rgba(255,255,255,.14);
-  box-shadow: 0 0 0 3px rgba(255,255,255,.07);
+  border-color: rgba(255,255,255,.45);
+  background: rgba(255,255,255,.16);
+  box-shadow: 0 0 0 3px rgba(255,255,255,.08), 0 2px 12px rgba(0,0,0,.15);
 }
 
 .btn-login {
@@ -263,6 +276,15 @@ body {
   background: linear-gradient(135deg, var(--c-red) 0%, #b71c1c 100%);
   color: white;
   box-shadow: 0 4px 16px rgba(211,47,47,.4);
+  position: relative;
+  overflow: hidden;
+}
+.btn-login::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, rgba(255,255,255,.15) 0%, transparent 60%);
+  pointer-events: none;
 }
 .btn-login:hover { filter: brightness(1.1); transform: translateY(-1px); box-shadow: 0 6px 24px rgba(211,47,47,.5); }
 .btn-login:active { transform: translateY(0); }
@@ -708,10 +730,10 @@ body {
    USER GREETING HERO
    ================================================================ */
 .user-hero {
-  background: linear-gradient(135deg, var(--c-navy) 0%, #1a3a5c 100%);
+  background: linear-gradient(135deg, var(--c-navy) 0%, #1a3a5c 60%, #0d2640 100%);
   color: white;
   border-radius: var(--r-lg);
-  padding: 22px 20px;
+  padding: 24px 22px;
   margin-bottom: 14px;
   position: relative;
   overflow: hidden;
@@ -723,16 +745,23 @@ body {
   left: 16px;
   top: 50%;
   transform: translateY(-50%);
-  font-size: 3.8em;
-  opacity: .08;
+  font-size: 4.2em;
+  opacity: .07;
   pointer-events: none;
 }
-.user-hero h3 { font-size: 1.3em; font-weight: 900; margin-bottom: 4px; }
-.user-hero p { font-size: .83em; opacity: .65; }
+.user-hero::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, rgba(255,255,255,.04) 0%, transparent 60%);
+  pointer-events: none;
+}
+.user-hero h3 { font-size: 1.35em; font-weight: 900; margin-bottom: 4px; }
+.user-hero p { font-size: .83em; opacity: .6; }
 .user-hero-time {
   font-size: .73em;
-  opacity: .45;
-  margin-top: 7px;
+  opacity: .4;
+  margin-top: 8px;
   font-weight: 500;
 }
 
@@ -1284,7 +1313,7 @@ tr:hover td { background: var(--bg); }
   bottom: 88px;
   left: 50%;
   transform: translateX(-50%);
-  padding: 12px 24px;
+  padding: 13px 26px;
   border-radius: var(--r-full);
   font-family: 'Heebo', sans-serif;
   font-size: .88em;
@@ -1292,11 +1321,12 @@ tr:hover td { background: var(--bg); }
   color: white;
   z-index: 10000;
   display: none;
-  box-shadow: var(--sh-lg);
+  box-shadow: var(--sh-lg), 0 0 0 1px rgba(255,255,255,.1);
   white-space: nowrap;
   max-width: 88vw;
   text-align: center;
   animation: toastIn .3s cubic-bezier(.34,1.56,.64,1) both;
+  backdrop-filter: blur(8px);
 }
 @keyframes toastIn {
   from { transform: translateX(-50%) scale(.7); opacity: 0; }
@@ -1660,6 +1690,7 @@ tr:hover td { background: var(--bg); }
   <div class="login-logo-wrap">
     <img id="site-logo" src="" alt="לוגו">
     <p class="login-tagline">מערכת ניהול מלאי</p>
+    <span class="login-version-badge">v<script>document.write(APP_VERSION)</script></span>
   </div>
 
   <!-- Staff login -->
@@ -1997,11 +2028,6 @@ tr:hover td { background: var(--bg); }
       <h3 id="u-hello">שלום!</h3>
       <p>עדכן כמויות, רשום סיבה ולחץ שמירה</p>
       <div class="user-hero-time" id="u-time"></div>
-    </div>
-
-    <div id="user-alert-banner" class="alert-banner critical">
-      <h4>⚠️ שים לב — מלאי נמוך</h4>
-      <div id="user-alert-list" class="ab-list"></div>
     </div>
 
     <div class="card">
@@ -2451,14 +2477,6 @@ function checkLowStock() {
   if (ab && al) {
     if (low.length) { ab.classList.add('show'); al.innerHTML = makeList(low); }
     else              ab.classList.remove('show');
-  }
-
-  // User banner
-  const ub  = document.getElementById('user-alert-banner');
-  const ul  = document.getElementById('user-alert-list');
-  if (ub && ul) {
-    if (low.length) { ub.classList.add('show'); ul.innerHTML = makeList(low); }
-    else              ub.classList.remove('show');
   }
 
   // Stats
