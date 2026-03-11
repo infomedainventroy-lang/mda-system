@@ -598,11 +598,12 @@ body {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 8px 14px;
-  margin: 20px 0 8px;
-  background: var(--bg);
+  padding: 9px 14px;
+  margin: 22px 0 8px;
+  background: linear-gradient(135deg, var(--bg) 0%, #eef1f6 100%);
   border-radius: var(--r-sm);
   border-right: 4px solid var(--c-red);
+  box-shadow: var(--sh-xs);
 }
 .section-header .sh-title {
   font-weight: 900;
@@ -633,10 +634,19 @@ body {
   align-items: center;
   gap: 12px;
   transition: var(--tr);
+  box-shadow: var(--sh-xs);
 }
-.item-card:hover { border-color: var(--border-dark); box-shadow: var(--sh-sm); }
-.item-card.is-low { border-color: #ffcdd2; background: #fff8f8; }
-.item-card.is-out { border-color: var(--c-red); background: var(--c-red-pale); }
+.item-card:hover { border-color: var(--border-dark); box-shadow: var(--sh-sm); transform: translateY(-1px); }
+.item-card.is-low {
+  border-color: #ffcdd2;
+  background: linear-gradient(135deg, #fff8f8 0%, #fff 100%);
+  border-right: 3px solid var(--c-orange);
+}
+.item-card.is-out {
+  border-color: var(--c-red);
+  background: linear-gradient(135deg, #ffebee 0%, #fff 100%);
+  border-right: 3px solid var(--c-red);
+}
 .item-card.highlight {
   border-color: var(--c-blue) !important;
   background: #e3f2fd !important;
@@ -703,27 +713,31 @@ body {
 
 /* Quick input */
 .quick-input {
-  width: 74px !important;
-  height: 44px;
+  width: 80px !important;
+  height: 48px;
   border: 2px solid var(--border) !important;
   border-radius: var(--r-sm) !important;
   text-align: center !important;
   font-family: 'Heebo', sans-serif !important;
-  font-size: 1.15em !important;
+  font-size: 1.2em !important;
   font-weight: 900 !important;
-  color: var(--c-red) !important;
+  color: var(--c-navy) !important;
   background: var(--surface) !important;
   transition: var(--tr) !important;
   outline: none !important;
   flex-shrink: 0;
+  box-shadow: var(--sh-xs);
 }
 .quick-input:focus {
   border-color: var(--c-blue) !important;
   box-shadow: 0 0 0 3px rgba(26,110,181,.12) !important;
+  color: var(--c-blue) !important;
 }
 .quick-input.changed {
   border-color: var(--c-red) !important;
   background: var(--c-red-pale) !important;
+  color: var(--c-red) !important;
+  box-shadow: 0 0 0 2px rgba(211,47,47,.15) !important;
 }
 
 /* ================================================================
@@ -2807,20 +2821,24 @@ function renderUser() {
       const card = document.createElement('div');
       card.className = `item-card${isOut ? ' is-out' : isLow ? ' is-low' : ''}`;
       card.dataset.id = i.id;
+
+      const metaExtra = [];
+      if (Number.isFinite(i.minQty) && i.minQty >= 0) metaExtra.push(`מינ׳: ${i.minQty}`);
+      if (i.barcode) metaExtra.push(`📦 ${i.barcode}`);
+
       card.innerHTML = `
         ${i.image
-          ? `<img src="${esc(i.image)}" onclick="viewImage('${esc(i.image)}')" style="width:52px;height:52px;border-radius:var(--r-sm);object-fit:cover;border:1.5px solid var(--border);flex-shrink:0;cursor:pointer;" title="לחץ להגדלה">`
+          ? `<img src="${esc(i.image)}" onclick="viewImage('${esc(i.image)}')" style="width:52px;height:52px;border-radius:var(--r-sm);object-fit:cover;border:1.5px solid var(--border);flex-shrink:0;cursor:pointer;transition:var(--tr);" title="לחץ להגדלה">`
           : ''}
         <div class="item-info">
           <span class="item-name">
             ${esc(i.name)}
-            ${isAdmin && isOut ? '<span class="badge badge-out">חסר</span>' : ''}
-            ${isAdmin && isLow ? '<span class="badge badge-low">נמוך</span>' : ''}
+            ${isOut ? '<span class="badge badge-out">חסר</span>' : isLow ? '<span class="badge badge-low">נמוך</span>' : ''}
           </span>
           <span class="item-meta ${isOut ? 'is-out' : isLow ? 'is-low' : ''}">
-            במלאי: <span class="qty-val">${qty}</span>
+            במלאי: <span class="qty-val">${qty}</span>${metaExtra.length ? ' · <span style="font-size:.88em;opacity:.7;">' + metaExtra.join(' · ') + '</span>' : ''}
           </span>
-          <div class="stock-bar">
+          <div class="stock-bar" style="margin-top:6px;">
             <div class="stock-bar-fill" style="width:${barPct}%;background:${barColor};"></div>
           </div>
         </div>
@@ -2828,9 +2846,8 @@ function renderUser() {
           type="number"
           class="quick-input${pVal ? ' changed' : ''}"
           value="${pVal}"
-          placeholder="0"
+          placeholder="${qty}"
           min="0"
-          max="${qty}"
           oninput="trackChange('${i.id}',this.value)"
         >
       `;
