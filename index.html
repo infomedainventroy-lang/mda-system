@@ -1,540 +1,540 @@
 <!DOCTYPE html>
 <html lang="he" dir="rtl">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<meta name="theme-color" content="#0d1b2a">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<script>
-  const APP_VERSION = "1.08";
-  const APP_BUILD_TS = Date.now();
-</script>
-<title id="page-title">מערכת מלאי מד"א</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="theme-color" content="#0d1b2a">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <script>
+        const APP_VERSION = "1.08";
+        const APP_BUILD_TS = Date.now();
+    </script>
+    <title id="page-title">מערכת מלאי מד"א</title>
 
-<!-- Fonts -->
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Heebo:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Heebo:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
 
-<!-- Firebase -->
-<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
-<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
-<!-- Chart.js -->
-<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
-<!-- Barcode Scanner -->
-<script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+    <!-- Firebase -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <!-- Barcode Scanner -->
+    <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
 
-<style>
-/* ================================================================
-   CSS CUSTOM PROPERTIES
-   ================================================================ */
-:root {
-  /* Brand palette */
-  --c-navy:        #0d1b2a;
-  --c-navy-mid:    #152538;
-  --c-navy-light:  #1e3a5f;
-  --c-blue:        #1a6eb5;
-  --c-blue-glow:   #2196f3;
-  --c-red:         #d32f2f;
-  --c-red-light:   #ef5350;
-  --c-red-pale:    #ffebee;
-  --c-orange:      #e65100;
-  --c-orange-pale: #fff3e0;
-  --c-green:       #1b5e20;
-  --c-green-light: #43a047;
-  --c-green-pale:  #e8f5e9;
-  --c-gold:        #f9a825;
-  --c-teal:        #00695c;
-  --c-teal-light:  #26a69a;
+    <style>
+        /* ================================================================
+           CSS CUSTOM PROPERTIES
+           ================================================================ */
+        :root {
+            /* Brand palette */
+            --c-navy:        #0d1b2a;
+            --c-navy-mid:    #152538;
+            --c-navy-light:  #1e3a5f;
+            --c-blue:        #1a6eb5;
+            --c-blue-glow:   #2196f3;
+            --c-red:         #d32f2f;
+            --c-red-light:   #ef5350;
+            --c-red-pale:    #ffebee;
+            --c-orange:      #e65100;
+            --c-orange-pale: #fff3e0;
+            --c-green:       #1b5e20;
+            --c-green-light: #43a047;
+            --c-green-pale:  #e8f5e9;
+            --c-gold:        #f9a825;
+            --c-teal:        #00695c;
+            --c-teal-light:  #26a69a;
 
-  /* UI neutral */
-  --bg:            #f4f6f9;
-  --surface:       #ffffff;
-  --border:        #e1e6ed;
-  --border-dark:   #c9d0db;
-  --text:          #1a202c;
-  --text-soft:     #4a5568;
-  --text-muted:    #8a96a8;
+            /* UI neutral */
+            --bg:            #f4f6f9;
+            --surface:       #ffffff;
+            --border:        #e1e6ed;
+            --border-dark:   #c9d0db;
+            --text:          #1a202c;
+            --text-soft:     #4a5568;
+            --text-muted:    #8a96a8;
 
-  /* Shadows */
-  --sh-xs: 0 1px 3px rgba(0,0,0,.07);
-  --sh-sm: 0 2px 8px rgba(0,0,0,.08);
-  --sh-md: 0 4px 16px rgba(0,0,0,.10);
-  --sh-lg: 0 8px 32px rgba(0,0,0,.13);
-  --sh-xl: 0 16px 48px rgba(0,0,0,.16);
+            /* Shadows */
+            --sh-xs: 0 1px 3px rgba(0,0,0,.07);
+            --sh-sm: 0 2px 8px rgba(0,0,0,.08);
+            --sh-md: 0 4px 16px rgba(0,0,0,.10);
+            --sh-lg: 0 8px 32px rgba(0,0,0,.13);
+            --sh-xl: 0 16px 48px rgba(0,0,0,.16);
 
-  /* Radii */
-  --r-xs: 6px;
-  --r-sm: 10px;
-  --r-md: 14px;
-  --r-lg: 20px;
-  --r-xl: 28px;
-  --r-full: 9999px;
+            /* Radii */
+            --r-xs: 6px;
+            --r-sm: 10px;
+            --r-md: 14px;
+            --r-lg: 20px;
+            --r-xl: 28px;
+            --r-full: 9999px;
 
-  /* Transitions */
-  --ease: cubic-bezier(.4,0,.2,1);
-  --tr: all .2s var(--ease);
-  --tr-slow: all .35s var(--ease);
-}
+            /* Transitions */
+            --ease: cubic-bezier(.4,0,.2,1);
+            --tr: all .2s var(--ease);
+            --tr-slow: all .35s var(--ease);
+        }
 
-/* ================================================================
-   RESET & BASE
-   ================================================================ */
-*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+        /* ================================================================
+           RESET & BASE
+           ================================================================ */
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
-html { scroll-behavior: smooth; }
+        html { scroll-behavior: smooth; }
 
-body {
-  font-family: 'Heebo', sans-serif;
-  background: var(--bg);
-  color: var(--text);
-  direction: rtl;
-  min-height: 100vh;
-  -webkit-font-smoothing: antialiased;
-  -webkit-tap-highlight-color: transparent;
-  overflow-x: hidden;
-}
+        body {
+            font-family: 'Heebo', sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            direction: rtl;
+            min-height: 100vh;
+            -webkit-font-smoothing: antialiased;
+            -webkit-tap-highlight-color: transparent;
+            overflow-x: hidden;
+        }
 
-.hidden { display: none !important; }
-.sr-only { position:absolute; width:1px; height:1px; overflow:hidden; clip:rect(0,0,0,0); }
+        .hidden { display: none !important; }
+        .sr-only { position:absolute; width:1px; height:1px; overflow:hidden; clip:rect(0,0,0,0); }
 
-/* ================================================================
-   TICKER STRIP
-   ================================================================ */
-.ticker-bar {
-  background: var(--c-navy);
-  color: rgba(255,255,255,.7);
-  font-size: .75em;
-  font-weight: 600;
-  letter-spacing: .03em;
-  padding: 7px 16px;
-  text-align: center;
-  border-bottom: 1px solid rgba(255,255,255,.06);
-  min-height: 32px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-}
-.ticker-bar .v-ok  { color: #69f0ae; font-weight: 800; }
-.ticker-bar .v-bad { color: #ff5252; font-weight: 800; animation: blink 1s infinite step-end; }
-@keyframes blink { 50% { opacity: 0; } }
+        /* ================================================================
+           TICKER STRIP
+           ================================================================ */
+        .ticker-bar {
+            background: var(--c-navy);
+            color: rgba(255,255,255,.7);
+            font-size: .75em;
+            font-weight: 600;
+            letter-spacing: .03em;
+            padding: 7px 16px;
+            text-align: center;
+            border-bottom: 1px solid rgba(255,255,255,.06);
+            min-height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+        .ticker-bar .v-ok  { color: #69f0ae; font-weight: 800; }
+        .ticker-bar .v-bad { color: #ff5252; font-weight: 800; animation: blink 1s infinite step-end; }
+        @keyframes blink { 50% { opacity: 0; } }
 
-/* ================================================================
-   LOGIN PAGE
-   ================================================================ */
-.login-page {
-  min-height: 100vh;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  padding: 24px 16px 40px;
-  background:
-    radial-gradient(ellipse at 15% 90%, rgba(211,47,47,.15) 0%, transparent 55%),
-    radial-gradient(ellipse at 85% 10%, rgba(26,110,181,.2) 0%, transparent 55%),
-    linear-gradient(160deg, var(--c-navy) 0%, #0a2744 60%, #091e35 100%);
-  position: relative;
-  overflow: hidden;
-}
+        /* ================================================================
+           LOGIN PAGE
+           ================================================================ */
+        .login-page {
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 24px 16px 40px;
+            background:
+                radial-gradient(ellipse at 15% 90%, rgba(211,47,47,.15) 0%, transparent 55%),
+                radial-gradient(ellipse at 85% 10%, rgba(26,110,181,.2) 0%, transparent 55%),
+                linear-gradient(160deg, var(--c-navy) 0%, #0a2744 60%, #091e35 100%);
+            position: relative;
+            overflow: hidden;
+        }
 
-.login-page::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background-image:
-    radial-gradient(circle at 50% 50%, rgba(255,255,255,.015) 1px, transparent 1px);
-  background-size: 40px 40px;
-  pointer-events: none;
-}
+        .login-page::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background-image:
+                radial-gradient(circle at 50% 50%, rgba(255,255,255,.015) 1px, transparent 1px);
+            background-size: 40px 40px;
+            pointer-events: none;
+        }
 
-/* Decorative circles */
-.login-page::after {
-  content: '';
-  position: absolute;
-  width: 500px; height: 500px;
-  border-radius: 50%;
-  border: 1px solid rgba(255,255,255,.04);
-  top: -150px; left: -100px;
-  pointer-events: none;
-}
+        /* Decorative circles */
+        .login-page::after {
+            content: '';
+            position: absolute;
+            width: 500px; height: 500px;
+            border-radius: 50%;
+            border: 1px solid rgba(255,255,255,.04);
+            top: -150px; left: -100px;
+            pointer-events: none;
+        }
 
-.login-logo-wrap {
-  z-index: 2;
-  margin-bottom: 30px;
-  text-align: center;
-  animation: fadeDown .6s var(--ease) both;
-}
+        .login-logo-wrap {
+            z-index: 2;
+            margin-bottom: 30px;
+            text-align: center;
+            animation: fadeDown .6s var(--ease) both;
+        }
 
-.login-logo-wrap img {
-  max-width: 130px;
-  max-height: 80px;
-  filter: drop-shadow(0 4px 20px rgba(0,0,0,.45));
-}
+        .login-logo-wrap img {
+            max-width: 130px;
+            max-height: 80px;
+            filter: drop-shadow(0 4px 20px rgba(0,0,0,.45));
+        }
 
-.login-tagline {
-  color: rgba(255,255,255,.38);
-  font-size: .78em;
-  margin-top: 10px;
-  letter-spacing: .1em;
-  text-transform: uppercase;
-}
+        .login-tagline {
+            color: rgba(255,255,255,.38);
+            font-size: .78em;
+            margin-top: 10px;
+            letter-spacing: .1em;
+            text-transform: uppercase;
+        }
 
-.login-version-badge {
-  display: inline-block;
-  margin-top: 10px;
-  background: rgba(255,255,255,.08);
-  border: 1px solid rgba(255,255,255,.14);
-  border-radius: var(--r-full);
-  padding: 3px 12px;
-  font-size: .69em;
-  color: rgba(255,255,255,.4);
-  letter-spacing: .08em;
-  font-weight: 600;
-}
+        .login-version-badge {
+            display: inline-block;
+            margin-top: 10px;
+            background: rgba(255,255,255,.08);
+            border: 1px solid rgba(255,255,255,.14);
+            border-radius: var(--r-full);
+            padding: 3px 12px;
+            font-size: .69em;
+            color: rgba(255,255,255,.4);
+            letter-spacing: .08em;
+            font-weight: 600;
+        }
 
-.login-card {
-  z-index: 2;
-  width: 100%;
-  max-width: 390px;
-  background: rgba(255,255,255,.08);
-  backdrop-filter: blur(28px) saturate(200%);
-  -webkit-backdrop-filter: blur(28px) saturate(200%);
-  border: 1px solid rgba(255,255,255,.16);
-  border-radius: var(--r-xl);
-  padding: 32px 28px;
-  margin-bottom: 16px;
-  animation: fadeUp .5s var(--ease) both;
-  box-shadow: 0 8px 40px rgba(0,0,0,.3), inset 0 1px 0 rgba(255,255,255,.12), inset 0 -1px 0 rgba(0,0,0,.08);
-}
+        .login-card {
+            z-index: 2;
+            width: 100%;
+            max-width: 390px;
+            background: rgba(255,255,255,.08);
+            backdrop-filter: blur(28px) saturate(200%);
+            -webkit-backdrop-filter: blur(28px) saturate(200%);
+            border: 1px solid rgba(255,255,255,.16);
+            border-radius: var(--r-xl);
+            padding: 32px 28px;
+            margin-bottom: 16px;
+            animation: fadeUp .5s var(--ease) both;
+            box-shadow: 0 8px 40px rgba(0,0,0,.3), inset 0 1px 0 rgba(255,255,255,.12), inset 0 -1px 0 rgba(0,0,0,.08);
+        }
 
-.login-card:nth-child(3) { animation-delay: .12s; }
+        .login-card:nth-child(3) { animation-delay: .12s; }
 
-.login-card h3 {
-  color: white;
-  font-size: 1.1em;
-  font-weight: 800;
-  margin-bottom: 20px;
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
+        .login-card h3 {
+            color: white;
+            font-size: 1.1em;
+            font-weight: 800;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
 
-.login-card.admin-card {
-  background: rgba(255,255,255,.03);
-  border-color: rgba(255,255,255,.07);
-}
-.login-card.admin-card h3 { color: rgba(255,255,255,.7); font-size: 1em; }
+        .login-card.admin-card {
+            background: rgba(255,255,255,.03);
+            border-color: rgba(255,255,255,.07);
+        }
+        .login-card.admin-card h3 { color: rgba(255,255,255,.7); font-size: 1em; }
 
-.field-wrap {
-  position: relative;
-  margin-bottom: 12px;
-}
+        .field-wrap {
+            position: relative;
+            margin-bottom: 12px;
+        }
 
-.field-icon {
-  position: absolute;
-  right: 14px;
-  top: 50%;
-  transform: translateY(-50%);
-  font-size: 1em;
-  pointer-events: none;
-  opacity: .55;
-  z-index: 1;
-}
+        .field-icon {
+            position: absolute;
+            right: 14px;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 1em;
+            pointer-events: none;
+            opacity: .55;
+            z-index: 1;
+        }
 
-.login-input {
-  width: 100%;
-  padding: 13px 44px 13px 14px;
-  border: 1.5px solid rgba(255,255,255,.18);
-  border-radius: var(--r-sm);
-  font-size: 15px;
-  font-family: 'Heebo', sans-serif;
-  background: rgba(255,255,255,.1);
-  color: white;
-  transition: var(--tr);
-  outline: none;
-}
-.login-input::placeholder { color: rgba(255,255,255,.35); }
-.login-input:focus {
-  border-color: rgba(255,255,255,.45);
-  background: rgba(255,255,255,.16);
-  box-shadow: 0 0 0 3px rgba(255,255,255,.08), 0 2px 12px rgba(0,0,0,.15);
-}
+        .login-input {
+            width: 100%;
+            padding: 13px 44px 13px 14px;
+            border: 1.5px solid rgba(255,255,255,.18);
+            border-radius: var(--r-sm);
+            font-size: 15px;
+            font-family: 'Heebo', sans-serif;
+            background: rgba(255,255,255,.1);
+            color: white;
+            transition: var(--tr);
+            outline: none;
+        }
+        .login-input::placeholder { color: rgba(255,255,255,.35); }
+        .login-input:focus {
+            border-color: rgba(255,255,255,.45);
+            background: rgba(255,255,255,.16);
+            box-shadow: 0 0 0 3px rgba(255,255,255,.08), 0 2px 12px rgba(0,0,0,.15);
+        }
 
-.btn-login {
-  width: 100%;
-  padding: 14px;
-  border: none;
-  border-radius: var(--r-sm);
-  font-family: 'Heebo', sans-serif;
-  font-size: 15px;
-  font-weight: 800;
-  cursor: pointer;
-  transition: var(--tr);
-  letter-spacing: .02em;
-  margin-top: 6px;
-  background: linear-gradient(135deg, var(--c-red) 0%, #b71c1c 100%);
-  color: white;
-  box-shadow: 0 4px 16px rgba(211,47,47,.4);
-  position: relative;
-  overflow: hidden;
-}
-.btn-login::after {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(135deg, rgba(255,255,255,.15) 0%, transparent 60%);
-  pointer-events: none;
-}
-.btn-login:hover { filter: brightness(1.1); transform: translateY(-1px); box-shadow: 0 6px 24px rgba(211,47,47,.5); }
-.btn-login:active { transform: translateY(0); }
-.btn-login.admin-btn {
-  background: rgba(255,255,255,.13);
-  box-shadow: none;
-}
-.btn-login.admin-btn:hover { background: rgba(255,255,255,.2); box-shadow: none; }
+        .btn-login {
+            width: 100%;
+            padding: 14px;
+            border: none;
+            border-radius: var(--r-sm);
+            font-family: 'Heebo', sans-serif;
+            font-size: 15px;
+            font-weight: 800;
+            cursor: pointer;
+            transition: var(--tr);
+            letter-spacing: .02em;
+            margin-top: 6px;
+            background: linear-gradient(135deg, var(--c-red) 0%, #b71c1c 100%);
+            color: white;
+            box-shadow: 0 4px 16px rgba(211,47,47,.4);
+            position: relative;
+            overflow: hidden;
+        }
+        .btn-login::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(135deg, rgba(255,255,255,.15) 0%, transparent 60%);
+            pointer-events: none;
+        }
+        .btn-login:hover { filter: brightness(1.1); transform: translateY(-1px); box-shadow: 0 6px 24px rgba(211,47,47,.5); }
+        .btn-login:active { transform: translateY(0); }
+        .btn-login.admin-btn {
+            background: rgba(255,255,255,.13);
+            box-shadow: none;
+        }
+        .btn-login.admin-btn:hover { background: rgba(255,255,255,.2); box-shadow: none; }
 
-.err-msg {
-  color: #ff8a80;
-  font-size: .83em;
-  font-weight: 700;
-  text-align: center;
-  margin-top: 10px;
-  display: none;
-}
-.err-msg.show {
-  display: block;
-  animation: shake .4s var(--ease);
-}
+        .err-msg {
+            color: #ff8a80;
+            font-size: .83em;
+            font-weight: 700;
+            text-align: center;
+            margin-top: 10px;
+            display: none;
+        }
+        .err-msg.show {
+            display: block;
+            animation: shake .4s var(--ease);
+        }
 
-@keyframes shake {
-  0%,100%{ transform:translateX(0) }
-  20%{ transform:translateX(-7px) }
-  50%{ transform:translateX(7px) }
-  70%{ transform:translateX(-4px) }
-}
+        @keyframes shake {
+            0%,100%{ transform:translateX(0) }
+            20%{ transform:translateX(-7px) }
+            50%{ transform:translateX(7px) }
+            70%{ transform:translateX(-4px) }
+        }
 
-/* ================================================================
-   APP HEADER
-   ================================================================ */
-.app-header {
-  background: linear-gradient(135deg, var(--c-navy) 0%, var(--c-navy-mid) 100%);
-  color: white;
-  padding: 0 20px;
-  height: 60px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  position: sticky;
-  top: 0;
-  z-index: 300;
-  box-shadow: 0 2px 24px rgba(0,0,0,.3);
-}
+        /* ================================================================
+           APP HEADER
+           ================================================================ */
+        .app-header {
+            background: linear-gradient(135deg, var(--c-navy) 0%, var(--c-navy-mid) 100%);
+            color: white;
+            padding: 0 20px;
+            height: 60px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            position: sticky;
+            top: 0;
+            z-index: 300;
+            box-shadow: 0 2px 24px rgba(0,0,0,.3);
+        }
 
-.header-logo img {
-  max-height: 36px;
-  filter: brightness(0) invert(1);
-  opacity: .9;
-  display: block;
-}
+        .header-logo img {
+            max-height: 36px;
+            filter: brightness(0) invert(1);
+            opacity: .9;
+            display: block;
+        }
 
-.header-title {
-  font-size: .95em;
-  font-weight: 800;
-  letter-spacing: .01em;
-  flex: 1;
-  text-align: center;
-  margin: 0 14px;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
+        .header-title {
+            font-size: .95em;
+            font-weight: 800;
+            letter-spacing: .01em;
+            flex: 1;
+            text-align: center;
+            margin: 0 14px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
 
-.header-user-pill {
-  background: rgba(255,255,255,.12);
-  border: 1px solid rgba(255,255,255,.15);
-  border-radius: var(--r-full);
-  padding: 5px 13px;
-  font-size: .8em;
-  font-weight: 700;
-  white-space: nowrap;
-  max-width: 130px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  cursor: default;
-  transition: var(--tr);
-}
-.header-user-pill:hover { background: rgba(255,255,255,.18); }
+        .header-user-pill {
+            background: rgba(255,255,255,.12);
+            border: 1px solid rgba(255,255,255,.15);
+            border-radius: var(--r-full);
+            padding: 5px 13px;
+            font-size: .8em;
+            font-weight: 700;
+            white-space: nowrap;
+            max-width: 130px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            cursor: default;
+            transition: var(--tr);
+        }
+        .header-user-pill:hover { background: rgba(255,255,255,.18); }
 
-/* ================================================================
-   NAV TABS
-   ================================================================ */
-.nav-tabs {
-  display: flex;
-  background: var(--surface);
-  border-bottom: 2px solid var(--border);
-  position: sticky;
-  top: 60px;
-  z-index: 200;
-  overflow-x: auto;
-  scrollbar-width: none;
-  box-shadow: var(--sh-xs);
-}
-.nav-tabs::-webkit-scrollbar { display: none; }
+        /* ================================================================
+           NAV TABS
+           ================================================================ */
+        .nav-tabs {
+            display: flex;
+            background: var(--surface);
+            border-bottom: 2px solid var(--border);
+            position: sticky;
+            top: 60px;
+            z-index: 200;
+            overflow-x: auto;
+            scrollbar-width: none;
+            box-shadow: var(--sh-xs);
+        }
+        .nav-tabs::-webkit-scrollbar { display: none; }
 
-.tab-btn {
-  flex: none;
-  padding: 14px 17px;
-  border: none;
-  background: none;
-  font-family: 'Heebo', sans-serif;
-  font-size: .86em;
-  font-weight: 700;
-  color: var(--text-muted);
-  cursor: pointer;
-  white-space: nowrap;
-  transition: var(--tr);
-  position: relative;
-}
-.tab-btn::after {
-  content: '';
-  position: absolute;
-  bottom: 0; left: 0; right: 0;
-  height: 3px;
-  background: var(--c-red);
-  border-radius: 3px 3px 0 0;
-  transform: scaleX(0);
-  transition: transform .2s var(--ease);
-}
-.tab-btn.active { color: var(--c-navy); }
-.tab-btn.active::after { transform: scaleX(1); }
-.tab-btn:hover:not(.active) { color: var(--c-navy); background: var(--bg); }
-.tab-btn.tab-logout { color: var(--c-red); margin-right: auto; }
+        .tab-btn {
+            flex: none;
+            padding: 14px 17px;
+            border: none;
+            background: none;
+            font-family: 'Heebo', sans-serif;
+            font-size: .86em;
+            font-weight: 700;
+            color: var(--text-muted);
+            cursor: pointer;
+            white-space: nowrap;
+            transition: var(--tr);
+            position: relative;
+        }
+        .tab-btn::after {
+            content: '';
+            position: absolute;
+            bottom: 0; left: 0; right: 0;
+            height: 3px;
+            background: var(--c-red);
+            border-radius: 3px 3px 0 0;
+            transform: scaleX(0);
+            transition: transform .2s var(--ease);
+        }
+        .tab-btn.active { color: var(--c-navy); }
+        .tab-btn.active::after { transform: scaleX(1); }
+        .tab-btn:hover:not(.active) { color: var(--c-navy); background: var(--bg); }
+        .tab-btn.tab-logout { color: var(--c-red); margin-right: auto; }
 
-.tab-badge {
-  display: inline-block;
-  background: var(--c-red);
-  color: white;
-  font-size: .65em;
-  font-weight: 900;
-  padding: 1px 6px;
-  border-radius: var(--r-full);
-  margin-right: 3px;
-  vertical-align: middle;
-  line-height: 1.6;
-}
+        .tab-badge {
+            display: inline-block;
+            background: var(--c-red);
+            color: white;
+            font-size: .65em;
+            font-weight: 900;
+            padding: 1px 6px;
+            border-radius: var(--r-full);
+            margin-right: 3px;
+            vertical-align: middle;
+            line-height: 1.6;
+        }
 
-/* ================================================================
-   CONTENT WRAPPER
-   ================================================================ */
-.content {
-  padding: 18px 16px 40px;
-  max-width: 940px;
-  margin: 0 auto;
-}
+        /* ================================================================
+           CONTENT WRAPPER
+           ================================================================ */
+        .content {
+            padding: 18px 16px 40px;
+            max-width: 940px;
+            margin: 0 auto;
+        }
 
-/* ================================================================
-   CARD
-   ================================================================ */
-.card {
-  background: var(--surface);
-  border-radius: var(--r-md);
-  padding: 20px;
-  border: 1px solid var(--border);
-  box-shadow: var(--sh-xs);
-  margin-bottom: 14px;
-  transition: var(--tr);
-}
-.card:hover { box-shadow: var(--sh-sm); }
+        /* ================================================================
+           CARD
+           ================================================================ */
+        .card {
+            background: var(--surface);
+            border-radius: var(--r-md);
+            padding: 20px;
+            border: 1px solid var(--border);
+            box-shadow: var(--sh-xs);
+            margin-bottom: 14px;
+            transition: var(--tr);
+        }
+        .card:hover { box-shadow: var(--sh-sm); }
 
-.card-title {
-  font-size: .97em;
-  font-weight: 800;
-  color: var(--c-navy);
-  margin-bottom: 16px;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
+        .card-title {
+            font-size: .97em;
+            font-weight: 800;
+            color: var(--c-navy);
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
 
-/* ================================================================
-   FORM ELEMENTS (app context)
-   ================================================================ */
-.app-input, .app-select {
-  width: 100%;
-  padding: 11px 14px;
-  border: 1.5px solid var(--border);
-  border-radius: var(--r-sm);
-  font-family: 'Heebo', sans-serif;
-  font-size: 14px;
-  background: var(--surface);
-  color: var(--text);
-  transition: var(--tr);
-  outline: none;
-  margin-bottom: 8px;
-}
-.app-input:focus, .app-select:focus {
-  border-color: var(--c-blue);
-  box-shadow: 0 0 0 3px rgba(26,110,181,.1);
-}
-.app-input::placeholder { color: var(--text-muted); }
+        /* ================================================================
+           FORM ELEMENTS (app context)
+           ================================================================ */
+        .app-input, .app-select {
+            width: 100%;
+            padding: 11px 14px;
+            border: 1.5px solid var(--border);
+            border-radius: var(--r-sm);
+            font-family: 'Heebo', sans-serif;
+            font-size: 14px;
+            background: var(--surface);
+            color: var(--text);
+            transition: var(--tr);
+            outline: none;
+            margin-bottom: 8px;
+        }
+        .app-input:focus, .app-select:focus {
+            border-color: var(--c-blue);
+            box-shadow: 0 0 0 3px rgba(26,110,181,.1);
+        }
+        .app-input::placeholder { color: var(--text-muted); }
 
-.input-row {
-  display: flex;
-  gap: 8px;
-  margin-bottom: 8px;
-  flex-wrap: wrap;
-}
-.input-row .app-input { margin-bottom: 0; }
+        .input-row {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 8px;
+            flex-wrap: wrap;
+        }
+        .input-row .app-input { margin-bottom: 0; }
 
-/* ================================================================
-   BUTTONS (app context)
-   ================================================================ */
-.btn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 7px;
-  padding: 11px 20px;
-  border: none;
-  border-radius: var(--r-sm);
-  font-family: 'Heebo', sans-serif;
-  font-size: 13.5px;
-  font-weight: 800;
-  cursor: pointer;
-  transition: var(--tr);
-  background: var(--c-navy);
-  color: white;
-  width: 100%;
-  letter-spacing: .01em;
-  white-space: nowrap;
-}
-.btn:hover { filter: brightness(1.12); transform: translateY(-1px); box-shadow: var(--sh-sm); }
-.btn:active { transform: translateY(0); box-shadow: none; }
-.btn:disabled { opacity: .5; cursor: not-allowed; transform: none; filter: none; }
-.btn.w-auto { width: auto; }
-.btn.sm { padding: 7px 13px; font-size: 12px; }
-.btn-red { background: var(--c-red); }
-.btn-red:hover { background: #b71c1c; }
-.btn-green { background: var(--c-green); }
-.btn-green:hover { background: #1b5e20; }
-.btn-gray { background: var(--text-soft); }
-.btn-blue { background: var(--c-blue); }
-.btn-blue:hover { background: #1557a0; }
-.btn-gold { background: var(--c-gold); color: #000; }
-.btn-teal { background: var(--c-teal); }
-.btn-outline {
-  background: transparent;
-  border: 1.5px solid var(--c-navy);
-  color: var(--c-navy);
-}
-.btn-outline:hover { background: var(--c-navy); color: white; }
-.btn-ghost {
-  background: transparent;
-  color: var(--text-soft);
-  border: 1px solid var(--border);
-}
-.btn-ghost:hover { background: var(--bg); color: var(--text); }
+        /* ================================================================
+           BUTTONS (app context)
+           ================================================================ */
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 7px;
+            padding: 11px 20px;
+            border: none;
+            border-radius: var(--r-sm);
+            font-family: 'Heebo', sans-serif;
+            font-size: 13.5px;
+            font-weight: 800;
+            cursor: pointer;
+            transition: var(--tr);
+            background: var(--c-navy);
+            color: white;
+            width: 100%;
+            letter-spacing: .01em;
+            white-space: nowrap;
+        }
+        .btn:hover { filter: brightness(1.12); transform: translateY(-1px); box-shadow: var(--sh-sm); }
+        .btn:active { transform: translateY(0); box-shadow: none; }
+        .btn:disabled { opacity: .5; cursor: not-allowed; transform: none; filter: none; }
+        .btn.w-auto { width: auto; }
+        .btn.sm { padding: 7px 13px; font-size: 12px; }
+        .btn-red { background: var(--c-red); }
+        .btn-red:hover { background: #b71c1c; }
+        .btn-green { background: var(--c-green); }
+        .btn-green:hover { background: #1b5e20; }
+        .btn-gray { background: var(--text-soft); }
+        .btn-blue { background: var(--c-blue); }
+        .btn-blue:hover { background: #1557a0; }
+        .btn-gold { background: var(--c-gold); color: #000; }
+        .btn-teal { background: var(--c-teal); }
+        .btn-outline {
+            background: transparent;
+            border: 1.5px solid var(--c-navy);
+            color: var(--c-navy);
+        }
+        .btn-outline:hover { background: var(--c-navy); color: white; }
+        .btn-ghost {
+            background: transparent;
+            color: var(--text-soft);
+            border: 1px solid var(--border);
+        }
+        .btn-ghost:hover { background: var(--bg); color: var(--text); }
 
 /* ================================================================
    STATS GRID
@@ -1691,824 +1691,824 @@ tr:hover td { background: var(--bg); }
 </head>
 <body>
 
-<!-- ================================================================
-     TICKER (login page)
-     ================================================================ -->
-<div id="ticker-login" class="ticker-bar"></div>
+    <!-- ================================================================
+         TICKER (login page)
+         ================================================================ -->
+    <div id="ticker-login" class="ticker-bar"></div>
 
-<!-- ================================================================
-     LOGIN PAGE
-     ================================================================ -->
-<div id="scr-login" class="login-page">
+    <!-- ================================================================
+         LOGIN PAGE
+         ================================================================ -->
+    <div id="scr-login" class="login-page">
 
-  <div class="login-logo-wrap">
-    <img id="site-logo" src="" alt="לוגו">
-    <p class="login-tagline">מערכת ניהול מלאי</p>
-    <span class="login-version-badge">v<script>document.write(APP_VERSION)</script></span>
-  </div>
-
-  <!-- Staff login -->
-  <div class="login-card">
-    <h3>👨‍⚕️ כניסת צוות</h3>
-    <div class="field-wrap">
-      <span class="field-icon">📱</span>
-      <input class="login-input" type="number" id="u-phone" placeholder="מספר טלפון" inputmode="numeric" autocomplete="username">
-    </div>
-    <div class="field-wrap">
-      <span class="field-icon">🔒</span>
-      <input class="login-input" type="password" id="u-pass" placeholder="קוד אישי" inputmode="numeric" autocomplete="current-password">
-    </div>
-    <button class="btn-login" onclick="login('user')">כניסה למערכת</button>
-    <p id="err-user" class="err-msg">⚠️ מספר טלפון או קוד אישי שגויים</p>
-  </div>
-
-  <!-- Admin login -->
-  <div class="login-card admin-card">
-    <h3>⚙️ כניסת מנהל</h3>
-    <div class="field-wrap">
-      <span class="field-icon">📧</span>
-      <input class="login-input" type="email" id="a-email" placeholder="אימייל מנהל" autocomplete="email">
-    </div>
-    <div class="field-wrap">
-      <span class="field-icon">🔑</span>
-      <input class="login-input" type="password" id="a-pass" placeholder="סיסמה" autocomplete="current-password">
-    </div>
-    <button class="btn-login admin-btn" onclick="login('admin')">כניסת מנהל</button>
-    <p id="err-admin" class="err-msg">⚠️ אימייל או סיסמה שגויים</p>
-  </div>
-
-</div>
-
-<!-- ================================================================
-     MAIN APP
-     ================================================================ -->
-<div id="app-main" class="hidden">
-
-  <div id="system-msg"></div>
-
-  <!-- App Header -->
-  <div class="app-header">
-    <div class="header-logo">
-      <img id="header-logo" src="" alt="לוגו">
-    </div>
-    <div class="header-title" id="site-header">מד"א מלאי</div>
-    <div class="header-user-pill" id="header-user"></div>
-  </div>
-
-  <!-- ==============================================================
-       ADMIN SCREEN
-       ============================================================== -->
-  <div id="scr-admin" class="hidden">
-    <nav class="nav-tabs" id="admin-nav">
-      <button class="tab-btn active" onclick="showTab('tab-dash',this)">📊 דאשבורד</button>
-      <button class="tab-btn" onclick="showTab('tab-inv',this)">📦 מלאי</button>
-      <button class="tab-btn" onclick="showTab('tab-team',this)">👥 צוות</button>
-      <button id="tab-logs-btn" class="tab-btn" onclick="showTab('tab-logs',this)">📜 לוגים</button>
-      <button class="tab-btn" onclick="showTab('tab-settings',this)">⚙️ הגדרות</button>
-      <button class="tab-btn tab-logout" onclick="logout()">↩ יציאה</button>
-    </nav>
-
-    <div class="content">
-
-      <!-- ---- DASHBOARD ---- -->
-      <div id="tab-dash" class="tab-pane">
-
-        <div id="admin-alert-banner" class="alert-banner critical">
-          <h4>🚨 פריטים חסרים / מלאי נמוך</h4>
-          <div id="admin-alert-list" class="ab-list"></div>
+        <div class="login-logo-wrap">
+            <img id="site-logo" src="" alt="לוגו">
+            <p class="login-tagline">מערכת ניהול מלאי</p>
+            <span class="login-version-badge">v<script>document.write(APP_VERSION)</script></span>
         </div>
 
-        <div class="stats-grid">
-          <div class="stat-card">
-            <span id="st-total" class="stat-num">0</span>
-            <div class="stat-label">פריטים</div>
-          </div>
-          <div class="stat-card">
-            <span id="st-cats" class="stat-num">0</span>
-            <div class="stat-label">קטגוריות</div>
-          </div>
-          <div class="stat-card danger">
-            <span id="st-low" class="stat-num">0</span>
-            <div class="stat-label">מלאי נמוך</div>
-          </div>
-          <div class="stat-card success">
-            <span id="st-today" class="stat-num">0</span>
-            <div class="stat-label">פעולות היום</div>
-          </div>
-          <div class="stat-card warning">
-            <span id="st-out" class="stat-num">0</span>
-            <div class="stat-label">אזל מהמלאי</div>
-          </div>
-          <div class="stat-card">
-            <span id="st-users" class="stat-num">0</span>
-            <div class="stat-label">אנשי צוות</div>
-          </div>
+        <!-- Staff login -->
+        <div class="login-card">
+            <h3>👨‍⚕️ כניסת צוות</h3>
+            <div class="field-wrap">
+                <span class="field-icon">📱</span>
+                <input class="login-input" type="number" id="u-phone" placeholder="מספר טלפון" inputmode="numeric" autocomplete="username">
+            </div>
+            <div class="field-wrap">
+                <span class="field-icon">🔒</span>
+                <input class="login-input" type="password" id="u-pass" placeholder="קוד אישי" inputmode="numeric" autocomplete="current-password">
+            </div>
+            <button class="btn-login" onclick="login('user')">כניסה למערכת</button>
+            <p id="err-user" class="err-msg">⚠️ מספר טלפון או קוד אישי שגויים</p>
         </div>
 
-        <div class="card">
-          <div class="card-title">📊 פיזור לפי קטגוריה</div>
-          <div class="chart-wrap"><canvas id="chartPie"></canvas></div>
+        <!-- Admin login -->
+        <div class="login-card admin-card">
+            <h3>⚙️ כניסת מנהל</h3>
+            <div class="field-wrap">
+                <span class="field-icon">📧</span>
+                <input class="login-input" type="email" id="a-email" placeholder="אימייל מנהל" autocomplete="email">
+            </div>
+            <div class="field-wrap">
+                <span class="field-icon">🔑</span>
+                <input class="login-input" type="password" id="a-pass" placeholder="סיסמה" autocomplete="current-password">
+            </div>
+            <button class="btn-login admin-btn" onclick="login('admin')">כניסת מנהל</button>
+            <p id="err-admin" class="err-msg">⚠️ אימייל או סיסמה שגויים</p>
         </div>
 
-        <div class="card">
-          <div class="card-title">📊 שימוש ב-7 ימים אחרונים</div>
-          <div class="chart-wrap"><canvas id="chartBar"></canvas></div>
-        </div>
-
-      </div><!-- /tab-dash -->
-
-      <!-- ---- REPORTS ---- -->
-      <div id="tab-reports" class="tab-pane hidden">
-        <div class="card">
-          <div class="card-title">🔍 פילוח צריכת מלאי</div>
-          <div style="display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap;">
-            <select class="app-select" id="report-range" style="margin-bottom:0;width:auto;" onchange="generateReport()">
-              <option value="1">היום</option>
-              <option value="7">שבוע</option>
-              <option value="30" selected>30 יום</option>
-              <option value="90">90 יום</option>
-              <option value="365">שנה</option>
-            </select>
-            <button class="btn w-auto sm btn-green" onclick="downloadReportCSV()">📥 ייצא דוח</button>
-          </div>
-          <div id="report-summary" style="font-size:.8em;color:var(--text-muted);font-weight:600;margin-bottom:12px;"></div>
-          <div id="report-results"></div>
-        </div>
-      </div>
-
-      <!-- ---- INVENTORY ---- -->
-      <div id="tab-inv" class="tab-pane hidden">
-
-        <div class="card">
-          <div class="card-title">➕ הוספת מוצר חדש</div>
-          <input type="text" id="n-name" class="app-input" placeholder="שם מוצר" list="cat-list-names">
-          <div class="input-row">
-            <input type="text" id="n-cat" class="app-input" placeholder="קטגוריה" list="cat-list" style="flex:1;margin-bottom:0;">
-            <input type="number" id="n-qty" class="app-input" placeholder="כמות" min="0" style="width:100px;margin-bottom:0;">
-          </div>
-          <datalist id="cat-list"></datalist>
-          <datalist id="cat-list-names"></datalist>
-          <div class="input-row" style="margin-top:8px;">
-            <input type="number" id="n-min" class="app-input" placeholder="מינימום (סף)" min="0" style="width:130px;margin-bottom:0;">
-            <input type="text" id="n-barcode" class="app-input" placeholder="📦 ברקוד (אופציונלי)" autocomplete="off" style="flex:1;margin-bottom:0;">
-          </div>
-          <div class="input-row" style="margin-top:0;">
-            <input type="text" id="n-madanet-id"   class="app-input" placeholder='מזהה מד"אנט (אופציונלי)' autocomplete="off" style="width:160px;margin-bottom:0;">
-            <input type="text" id="n-madanet-name" class="app-input" placeholder='שם מד"אנט (אופציונלי)'  autocomplete="off" style="flex:1;margin-bottom:0;">
-          </div>
-          <button class="btn btn-blue" style="margin-top:10px;" onclick="addItem()">➕ הוסף למלאי</button>
-        </div>
-
-        <div class="card">
-          <div class="card-title">📤 ייבוא וייצוא</div>
-          <div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:8px;">
-            <button class="btn btn-gray w-auto" onclick="downloadInv()">📥 הורד CSV</button>
-            <button class="btn btn-green w-auto" onclick="document.getElementById('csv-upload').click()">📤 ייבא CSV</button>
-            <button class="btn btn-red w-auto" onclick="deleteAllInventory()">🗑️ מחק הכל</button>
-          </div>
-          <input type="file" id="csv-upload" accept=".csv" style="display:none;" onchange="handleCsvUpload(this)">
-          <div id="import-progress" class="import-progress">
-            <div class="ip-bar-bg"><div class="ip-bar-fill" id="ip-fill"></div></div>
-            <div class="ip-text" id="ip-text">מייבא...</div>
-          </div>
-          <div style="font-size:.76em;color:var(--text-muted);margin-top:6px;">
-            פורמט CSV: שם, קטגוריה, כמות, מינימום, ברקוד, מזהה מד"אנט, שם מד"אנט
-          </div>
-        </div>
-
-        <div class="search-wrap">
-          <span class="search-icon">🔍</span>
-          <input type="text" class="search-input" id="admin-search"
-            placeholder="חפש פריט, קטגוריה או ברקוד..."
-            oninput="handleAdminSearch(this)">
-          <button class="search-clear" id="admin-clear" onclick="clearAdminSearch()">✕</button>
-        </div>
-
-        <div class="chips-row" id="admin-chips">
-          <span class="chip active-chip" data-f="all" onclick="setAdminFilter('all',this)">הכל</span>
-          <span class="chip chip-red" data-f="low" onclick="setAdminFilter('low',this)">⚠️ נמוך</span>
-          <span class="chip chip-red" data-f="out" onclick="setAdminFilter('out',this)">🚨 אזל</span>
-          <span class="chip" data-f="nobc" onclick="setAdminFilter('nobc',this)">🔍 ללא ברקוד</span>
-        </div>
-
-        <div id="admin-count" style="font-size:.78em;color:var(--text-muted);font-weight:600;padding:0 4px 10px;"></div>
-        <div id="admin-list"></div>
-
-      </div><!-- /tab-inv -->
-
-      <!-- ---- TEAM ---- -->
-      <div id="tab-team" class="tab-pane hidden">
-
-        <div class="card">
-          <div class="card-title">➕ הוספת איש צוות</div>
-          <input type="text" id="t-name" class="app-input" placeholder="שם מלא">
-          <div class="input-row">
-            <input type="number" id="t-phone" class="app-input" placeholder="מספר טלפון" style="flex:1;margin-bottom:0;">
-            <input type="text" id="t-pin" class="app-input" placeholder="קוד אישי" style="width:120px;margin-bottom:0;">
-          </div>
-          <button class="btn btn-blue" style="margin-top:10px;" onclick="addTeam()">💾 הוסף לצוות</button>
-        </div>
-
-        <div class="card">
-          <div class="card-title">👥 אנשי צוות פעילים / לא פעילים</div>
-          <div class="table-outer">
-            <table>
-              <thead>
-                <tr><th>שם</th><th>טלפון</th><th>קוד</th><th>סטטוס</th><th>פעולות</th></tr>
-              </thead>
-              <tbody id="team-table"></tbody>
-            </table>
-          </div>
-        </div>
-
-        <div class="card">
-          <div class="card-title">👨‍💼 הוספת מנהל</div>
-          <input type="email" id="admin-email" class="app-input" placeholder="אימייל">
-          <input type="text" id="admin-pass" class="app-input" placeholder="סיסמה">
-          <input type="text" id="admin-name" class="app-input" placeholder="שם תצוגה">
-          <button class="btn btn-blue" style="margin-top:2px;" onclick="addAdmin()">➕ הוסף מנהל</button>
-        </div>
-
-        <div class="card">
-          <div class="card-title">👨‍💼 רשימת מנהלים</div>
-          <div class="table-outer">
-            <table>
-              <thead>
-                <tr><th>אימייל</th><th>שם</th><th>סטטוס</th><th>פעולות</th></tr>
-              </thead>
-              <tbody id="admin-table"></tbody>
-            </table>
-          </div>
-        </div>
-
-      </div><!-- /tab-team -->
-
-      <!-- ---- LOGS ---- -->
-      <div id="tab-logs" class="tab-pane hidden">
-        <div class="card">
-          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;flex-wrap:wrap;gap:8px;">
-            <div class="card-title" style="margin-bottom:0;">📜 היסטוריית פעולות</div>
-            <button class="btn btn-green w-auto sm" onclick="downloadLogs()">📥 ייצא CSV</button>
-          </div>
-          <div class="log-filter-row">
-            <input class="log-filter-input" id="log-f-user" placeholder="🔍 שם משתמש..." oninput="filterLogs()">
-            <input class="log-filter-input" id="log-f-item" placeholder="🔍 שם פריט..." oninput="filterLogs()">
-            <select class="log-filter-select" id="log-f-action" onchange="filterLogs()">
-              <option value="all">כל הפעולות</option>
-              <option value="take">הוצאות בלבד</option>
-              <option value="add">הוספות בלבד</option>
-              <option value="manual">ידני בלבד</option>
-            </select>
-          </div>
-          <div id="logs-count" style="font-size:.78em;color:var(--text-muted);font-weight:600;margin-bottom:8px;"></div>
-          <div class="table-outer">
-            <table>
-              <thead>
-                <tr>
-                  <th>זמן</th><th>צוות</th><th>פריט</th>
-                  <th>נלקח</th><th>התווסף</th>
-                  <th>לפני</th><th>אחרי</th><th>סיבה</th>
-                </tr>
-              </thead>
-              <tbody id="logs-body"></tbody>
-            </table>
-          </div>
-        </div>
-      </div><!-- /tab-logs -->
-
-      <!-- ---- SETTINGS ---- -->
-      <div id="tab-settings" class="tab-pane hidden">
-        <div class="card">
-          <div class="card-title">⚙️ הגדרות מערכת</div>
-
-          <div class="setting-row">
-            <label>סף מלאי נמוך (גלובלי):</label>
-            <input type="number" id="set-threshold" class="sr-input" value="3" min="0" max="99" style="width:80px;">
-            <button class="btn w-auto sm btn-blue" onclick="saveThreshold()">שמור</button>
-          </div>
-
-          <hr style="border:none;border-top:1px solid var(--border);margin:14px 0;">
-
-          <div class="setting-row">
-            <label>הודעה רצה (ticker):</label>
-            <input type="text" id="set-ticker" class="sr-input" placeholder="הזן הודעה...">
-            <button class="btn w-auto sm btn-blue" onclick="saveTicker()">שמור</button>
-          </div>
-
-          <div class="setting-row">
-            <label>הודעת מערכת (כתובה):</label>
-            <input type="text" id="set-msg" class="sr-input" placeholder="הודעה חשובה...">
-            <button class="btn w-auto sm btn-blue" onclick="saveMsg()">שמור</button>
-          </div>
-
-          <hr style="border:none;border-top:1px solid var(--border);margin:14px 0;">
-
-          <div class="setting-row">
-            <label>נעילת המערכת:</label>
-            <button class="btn w-auto sm btn-red" onclick="lockSystem()">🔒 נעל</button>
-            <button class="btn w-auto sm btn-green" onclick="unlockSystem()">🔓 פתח</button>
-          </div>
-
-          <hr style="border:none;border-top:1px solid var(--border);margin:14px 0;">
-
-          <div class="setting-row">
-            <label>גרסה נדרשת:</label>
-            <input type="text" id="set-version" class="sr-input" style="width:90px;" placeholder="4.00">
-            <button class="btn w-auto sm btn-blue" onclick="saveVersion()">שמור</button>
-          </div>
-        </div>
-
-        <div class="card">
-          <div class="card-title">🔧 מידע טכני</div>
-          <p style="font-size:.83em;line-height:2;color:var(--text-soft);">
-            גרסה נוכחית: <b>v${APP_VERSION}</b><br>
-            אתר: <b id="info-site">—</b><br>
-            Firebase DB: <b id="info-db">—</b><br>
-            סה"כ לוגים: <b id="info-logs">0</b>
-          </p>
-        </div>
-      </div><!-- /tab-settings -->
-
-    </div><!-- /content (admin) -->
-  </div><!-- /scr-admin -->
-
-  <!-- ==============================================================
-       USER SCREEN
-       ============================================================== -->
-  <div id="scr-user" class="hidden content">
-
-    <div class="user-hero">
-      <h3 id="u-hello">שלום!</h3>
-      <p>עדכן כמויות, רשום סיבה ולחץ שמירה</p>
-      <div class="user-hero-time" id="u-time"></div>
     </div>
 
-    <div class="card">
-      <input type="text" id="u-reason" class="app-input" placeholder="✍️ סיבת הוצאה (נסיעה 54, מילוי אמבולנס...)">
-      <button class="scan-btn" onclick="openScanner('find')">
-        <span class="scan-icon">📷</span>
-        סרוק ברקוד מוצר
-      </button>
-      <div class="search-wrap" style="margin-bottom:0;">
-        <span class="search-icon">🔍</span>
-        <input type="text" id="u-search" class="search-input" placeholder="חפש ציוד..." oninput="handleUserSearch(this)">
-        <button class="search-clear" id="u-clear" onclick="clearUserSearch()">✕</button>
-      </div>
-    </div>
+    <!-- ================================================================
+         MAIN APP
+         ================================================================ -->
+    <div id="app-main" class="hidden">
 
-    <div class="chips-row" id="user-chips">
-      <span class="chip active-chip" data-f="all" onclick="setUserFilter('all',this)">הכל</span>
-      <span class="chip chip-red" data-f="low" onclick="setUserFilter('low',this)">⚠️ נמוך</span>
-      <span class="chip chip-blue" data-f="changed" onclick="setUserFilter('changed',this)">✏️ שונו</span>
-    </div>
+        <div id="system-msg"></div>
 
-    <div id="user-count" style="font-size:.78em;color:var(--text-muted);font-weight:600;padding:0 4px 8px;"></div>
-    <div id="user-stock-list"></div>
-
-    <button id="floating-save" onclick="syncAllChanges()">💾 שמור שינויים (0)</button>
-
-    <div style="height:22px;"></div>
-    <button class="btn btn-gray" onclick="logout()">↩ יציאה</button>
-    <div style="height:90px;"></div>
-
-  </div><!-- /scr-user -->
-
-</div><!-- /app-main -->
-
-<!-- ================================================================
-     MODALS
-     ================================================================ -->
-
-<!-- Confirm overlay -->
-<div id="confirmOverlay" class="overlay hidden">
-  <div class="confirm-box">
-    <p id="confirmText">האם אתה בטוח?</p>
-    <div class="confirm-actions">
-      <button class="ca-cancel" onclick="confirmNo()">ביטול</button>
-      <button class="ca-danger" id="confirmYesBtn" onclick="confirmYes()">אישור</button>
-    </div>
-  </div>
-</div>
-
-<!-- Custom modal (async confirm) -->
-<div id="customModal" class="overlay" style="display:none;">
-  <div class="modal-box">
-    <h3 id="modal-title">אישור</h3>
-    <p id="modal-msg"></p>
-    <div class="modal-actions">
-      <button class="btn btn-outline" id="modal-cancel">ביטול</button>
-      <button class="btn btn-red" id="modal-confirm">אישור</button>
-    </div>
-  </div>
-</div>
-
-<!-- Input modal (async prompt) -->
-<div id="inputModal" class="overlay" style="display:none;">
-  <div class="modal-box">
-    <h3 id="im-title"></h3>
-    <p id="im-msg"></p>
-    <input type="text" class="modal-input" id="im-input">
-    <div class="modal-actions">
-      <button class="btn btn-outline" id="im-cancel">ביטול</button>
-      <button class="btn" id="im-ok">אישור</button>
-    </div>
-  </div>
-</div>
-
-<!-- Barcode scanner -->
-<div id="scan-modal">
-  <div id="scan-header">
-    <h3 id="scan-title">📷 סרוק ברקוד</h3>
-    <button id="scan-close-btn" onclick="closeScanner()">✕ סגור</button>
-  </div>
-  <div id="scan-video-wrap">
-    <div id="qr-reader"></div>
-  </div>
-  <div id="scan-status">⏳ מאתחל מצלמה...</div>
-  <div id="scan-manual">
-    <input type="text" id="scan-manual-input" placeholder="הזן ברקוד ידנית..." inputmode="numeric">
-    <button id="scan-manual-btn" onclick="submitManualBarcode()">✓ אשר</button>
-  </div>
-  <div id="scan-tip">כוון ברקוד למסגרת · או הזן ידנית</div>
-</div>
-
-<!-- Toast -->
-<div id="toast"></div>
-
-<!-- ================================================================
-     JAVASCRIPT
-     ================================================================ -->
-<script>
-
-/* ================================================================
-   SITE CONFIGURATION
-   ================================================================ */
-const CURRENT_SITE = 'hodhasharon';
-
-const SITE_CONFIG = {
-  karnei: {
-    title:      'מערכת מלאי מד"א קרני שומרון',
-    logoUrl:    'https://cdn.jsdelivr.net/gh/ofireng/MDAAppImages/KarneiShomron.png',
-    headerText: 'מד"א קרני שומרון',
-    logoutUrl:  'https://sites.google.com/view/karnei-shomroni',
-    firebase: {
-      apiKey: "AIzaSyD9ApZOKj7aRUmcAG8MVncsCitOOJBH-cs",
-      authDomain: "mda-inventory.firebaseapp.com",
-      databaseURL: "https://meda-inventory-karnei-shomron-default-rtdb.asia-southeast1.firebasedatabase.app",
-      projectId: "mda-inventory",
-      storageBucket: "meda-inventory-karnei-shomron.firebasestorage.app",
-      messagingSenderId: "695234364436",
-      appId: "1:1081567938760:web:6093630be0672fdc01bdfd"
-    }
-  },
-  nave: {
-    title:      'מערכת מלאי מד"א נווה ימין',
-    logoUrl:    'https://cdn.jsdelivr.net/gh/ofireng/MDAAppImages/NeveYamin.png',
-    headerText: 'מד"א נווה ימין',
-    logoutUrl:  'https://sites.google.com/view/meda-inventory-neve-yamin',
-    firebase: {
-      apiKey: "AIzaSyBfpldPI5gydNrrF0UaJJUkCKhejJiQq3U",
-      authDomain: "meda-inventory-neve-yamin.firebaseapp.com",
-      databaseURL: "https://meda-inventory-neve-yamin-default-rtdb.europe-west1.firebasedatabase.app",
-      projectId: "meda-inventory-neve-yamin",
-      storageBucket: "meda-inventory-neve-yamin.firebasestorage.app",
-      messagingSenderId: "279956329748",
-      appId: "1:279956329748:web:957413804db84343691e01"
-    }
-  },
-  tnkids: {
-    title:      'מערכת מלאי טיפול נמרץ ילדים',
-    logoUrl:    'https://cdn.jsdelivr.net/gh/ofireng/MDAAppImages/birthLogo.webp',
-    headerText: 'טיפול נמרץ ילדים',
-    logoutUrl:  'https://sites.google.com/view/aten-warehouse',
-    firebase: {
-      apiKey: "AIzaSyA28chh4_gehbDVvd5mlln3w-G3uB6FX8s",
-      authDomain: "aten-warehouse.firebaseapp.com",
-      databaseURL: "https://aten-warehouse-default-rtdb.asia-southeast1.firebasedatabase.app",
-      projectId: "aten-warehouse",
-      storageBucket: "aten-warehouse.firebasestorage.app",
-      messagingSenderId: "1007963863702",
-      appId: "1:1007963863702:web:57e18aadc387e341dea0b7"
-    }
-  },
-  hodhasharon: {
-    title:      'מערכת מלאי מד"א הוד השרון',
-    logoUrl:    'https://cdn.jsdelivr.net/gh/infomedainventroy-lang/mda-system@main/Hod_Hasharon_photo.png', 
-    headerText: 'מד"א הוד השרון',
-    logoutUrl:  'https://sites.google.com/view/madehod-hasharon',
-    firebase: {
-      apiKey: "AIzaSyCe4yRcJF9_3HXze3HGCwKMLNUjDdlORRM",
-      authDomain: "mda-inventory.firebaseapp.com",
-      databaseURL: "https://mda-inventory-default-rtdb.europe-west1.firebasedatabase.app",
-      projectId: "mda-inventory",
-      storageBucket: "mda-inventory.firebasestorage.app",
-      messagingSenderId: "1081567938760",
-      appId: "1:1081567938760:web:6093630be0672fdc01bdfd"
-    }
-  }
-};
-
-const CFG = SITE_CONFIG[CURRENT_SITE];
-
-/* ================================================================
-   FIREBASE INIT
-   ================================================================ */
-firebase.initializeApp(CFG.firebase);
-const db = firebase.database();
-
-/* ================================================================
-   STATE
-   ================================================================ */
-let inv = [], team = [], logs = [], admins = {};
-let localChanges = {};
-let chartPie = null, chartBar = null;
-let LOW_STOCK_THRESHOLD = 3;
-
-// filter state
-let _uFilter = 'all', _uSearch = '';
-let _aFilter = 'all', _aSearch = '';
-let _logRows = [];
-
-/* ================================================================
-   DOM READY — INIT
-   ================================================================ */
-document.addEventListener('DOMContentLoaded', () => {
-  // Apply site config
-  document.getElementById('page-title').textContent = CFG.title;
-  document.getElementById('site-logo').src = CFG.logoUrl;
-  document.getElementById('header-logo').src = CFG.logoUrl;
-  document.getElementById('site-header').textContent = CFG.headerText;
-
-  // Tech info
-  const infoSite = document.getElementById('info-site');
-  const infoDB   = document.getElementById('info-db');
-  if (infoSite) infoSite.textContent = CURRENT_SITE;
-  if (infoDB)   infoDB.textContent   = CFG.firebase.databaseURL.replace('https://','').split('.')[0];
-
-  // Clock
-  updateClock();
-  setInterval(updateClock, 30000);
-
-  // Settings listener
-  db.ref('settings').on('value', snap => {
-    const s = snap.val() || {};
-    applyGlobalSettings(s);
-  });
-
-  // Focus first field
-  setTimeout(() => document.getElementById('u-phone')?.focus(), 400);
-});
-
-/* ================================================================
-   GLOBAL SETTINGS FROM FIREBASE
-   ================================================================ */
-function applyGlobalSettings(s) {
-  const tickerText = s.ticker || '';
-  const msg        = s.msg    || '';
-
-  // Version check
-  const reqV  = s.version || '';
-  const reqTS = s.TS || 0;
-  let vClass = 'v-ok', vText = '✅ עדכני';
-  if ( (reqV && String(reqV) !== String(APP_VERSION)) ||
-       (reqTS && APP_BUILD_TS < reqTS) ) {
-    vClass = 'v-bad';
-    vText  = '❌ גרסה ישנה — רענן! (F5)';
-  }
-
-  const tsStr = s.TS ? ` | ${new Date(s.TS).toLocaleString('he-IL')}` : '';
-  const tickerHTML = `${tickerText ? tickerText + ' | ' : ''}v${APP_VERSION}${tsStr} | <span class="${vClass}">${vText}</span>`;
-
-  ['ticker','ticker-login'].forEach(id => {
-    const el = document.getElementById(id);
-    if (el) el.innerHTML = tickerHTML;
-  });
-
-  const msgEl = document.getElementById('system-msg');
-  if (msgEl) msgEl.textContent = msg;
-
-  // Low stock threshold
-  if (Number.isFinite(s.lowStockThreshold)) {
-    LOW_STOCK_THRESHOLD = s.lowStockThreshold;
-    const el = document.getElementById('set-threshold');
-    if (el) el.value = LOW_STOCK_THRESHOLD;
-  }
-
-  // Populate settings fields (if admin is viewing them)
-  const stField = document.getElementById('set-ticker');
-  if (stField && !stField.dataset.editing) stField.value = tickerText;
-  const msgField = document.getElementById('set-msg');
-  if (msgField && !msgField.dataset.editing) msgField.value = msg;
-
-  // Locked
-  if (s.isLocked) {
-    document.body.innerHTML = `
-      <div style="min-height:100vh;display:flex;align-items:center;justify-content:center;
-                  background:var(--c-navy);color:white;font-family:Heebo,sans-serif;
-                  text-align:center;padding:40px;direction:rtl;">
-        <div>
-          <div style="font-size:3em;margin-bottom:20px;">⛔</div>
-          <h2 style="margin-bottom:10px;">המערכת נעולה זמנית</h2>
-          <p style="opacity:.5;">${msg || ''}</p>
+        <!-- App Header -->
+        <div class="app-header">
+            <div class="header-logo">
+                <img id="header-logo" src="" alt="לוגו">
+            </div>
+            <div class="header-title" id="site-header">מד"א מלאי</div>
+            <div class="header-user-pill" id="header-user"></div>
         </div>
-      </div>`;
-  }
-}
 
-/* ================================================================
-   CLOCK
-   ================================================================ */
-function updateClock() {
-  const el = document.getElementById('u-time');
-  if (!el) return;
-  el.textContent = new Date().toLocaleString('he-IL', {
-    weekday: 'long', day: 'numeric', month: 'long',
-    hour: '2-digit', minute: '2-digit'
-  });
-}
+        <!-- ==============================================================
+             ADMIN SCREEN
+             ============================================================== -->
+        <div id="scr-admin" class="hidden">
+            <nav class="nav-tabs" id="admin-nav">
+                <button class="tab-btn active" onclick="showTab('tab-dash',this)">📊 דאשבורד</button>
+                <button class="tab-btn" onclick="showTab('tab-inv',this)">📦 מלאי</button>
+                <button class="tab-btn" onclick="showTab('tab-team',this)">👥 צוות</button>
+                <button id="tab-logs-btn" class="tab-btn" onclick="showTab('tab-logs',this)">📜 לוגים</button>
+                <button class="tab-btn" onclick="showTab('tab-settings',this)">⚙️ הגדרות</button>
+                <button class="tab-btn tab-logout" onclick="logout()">↩ יציאה</button>
+            </nav>
 
-/* ================================================================
-   LOAD DATA — Firebase real-time listeners
-   ================================================================ */
-function loadData() {
+            <div class="content">
 
-  // ---- INVENTORY ----
-  db.ref('inventory').on('value', snap => {
-    inv = [];
-    snap.forEach(c => {
-      const v = c.val();
-      // Skip null / malformed entries
-      if (!v || typeof v.name !== 'string' || !v.name.trim()) return;
-      inv.push({ id: c.key, ...v });
-    });
+                <!-- ---- DASHBOARD ---- -->
+                <div id="tab-dash" class="tab-pane">
 
-    console.log(`[MDA v4] Loaded ${inv.length} inventory items`);
-    updateCatSuggestions();
+                    <div id="admin-alert-banner" class="alert-banner critical">
+                        <h4>🚨 פריטים חסרים / מלאי נמוך</h4>
+                        <div id="admin-alert-list" class="ab-list"></div>
+                    </div>
 
-    // Reset filters on full data reload
-    _uSearch = ''; _uFilter = 'all';
-    _aSearch = ''; _aFilter = 'all';
-    syncFilterChipUI('user-chips',  'all');
-    syncFilterChipUI('admin-chips', 'all');
+                    <div class="stats-grid">
+                        <div class="stat-card">
+                            <span id="st-total" class="stat-num">0</span>
+                            <div class="stat-label">פריטים</div>
+                        </div>
+                        <div class="stat-card">
+                            <span id="st-cats" class="stat-num">0</span>
+                            <div class="stat-label">קטגוריות</div>
+                        </div>
+                        <div class="stat-card danger">
+                            <span id="st-low" class="stat-num">0</span>
+                            <div class="stat-label">מלאי נמוך</div>
+                        </div>
+                        <div class="stat-card success">
+                            <span id="st-today" class="stat-num">0</span>
+                            <div class="stat-label">פעולות היום</div>
+                        </div>
+                        <div class="stat-card warning">
+                            <span id="st-out" class="stat-num">0</span>
+                            <div class="stat-label">אזל מהמלאי</div>
+                        </div>
+                        <div class="stat-card">
+                            <span id="st-users" class="stat-num">0</span>
+                            <div class="stat-label">אנשי צוות</div>
+                        </div>
+                    </div>
 
-    renderUser();
-    renderAdmin();
-    updateStats();
-    checkLowStock();
-  });
+                    <div class="card">
+                        <div class="card-title">📊 פיזור לפי קטגוריה</div>
+                        <div class="chart-wrap"><canvas id="chartPie"></canvas></div>
+                    </div>
 
-  // ---- TEAM ----
-  db.ref('team').on('value', snap => {
-    team = [];
-    let h = '';
-    snap.forEach(c => {
-      const t = { id: c.key, ...c.val() };
-      team.push(t);
-      const active = t.active !== false;
-      h += `<tr>
-        <td>${esc(t.name)}</td>
-        <td>${esc(t.phone)}</td>
-        <td><code>${esc(t.pin)}</code></td>
-        <td style="color:${active?'var(--c-green-light)':'var(--c-red)'};font-weight:800;">${active?'פעיל':'לא פעיל'}</td>
-        <td>
-          <button class="btn sm w-auto btn-gold" style="margin:2px;" onclick="toggleTeamStatus('${t.id}',${!active})">${active?'השבת':'הפעל'}</button>
-          <button class="btn sm w-auto btn-red" style="margin:2px;" onclick="deleteTeamMember('${t.id}','${esc(t.name)}')">מחק</button>
-        </td>
-      </tr>`;
-    });
-    document.getElementById('team-table').innerHTML = h ||
-      '<tr><td colspan="5" style="color:var(--text-muted);padding:20px;">אין אנשי צוות</td></tr>';
+                    <div class="card">
+                        <div class="card-title">📊 שימוש ב-7 ימים אחרונים</div>
+                        <div class="chart-wrap"><canvas id="chartBar"></canvas></div>
+                    </div>
 
-    // Update count stat
-    document.getElementById('st-users').textContent = team.length;
-  });
+                </div><!-- /tab-dash -->
 
-  // ---- ADMINS ----
-  db.ref('admins').on('value', snap => {
-    admins = {};
-    let h = '';
-    snap.forEach(c => {
-      const a = c.val(); const id = c.key;
-      if (a.active) admins[a.email] = { password: a.password, displayName: a.displayName, id };
-      const active = a.active;
-      h += `<tr>
-        <td>${esc(a.email)}</td>
-        <td>${esc(a.displayName)}</td>
-        <td style="color:${active?'var(--c-green-light)':'var(--c-red)'};font-weight:800;">${active?'פעיל':'לא פעיל'}</td>
-        <td>
-          <button class="btn sm w-auto btn-gold" style="margin:2px;" onclick="toggleAdminStatus('${id}',${!active})">${active?'השבת':'הפעל'}</button>
-          <button class="btn sm w-auto btn-red" style="margin:2px;" onclick="deleteAdmin('${id}','${esc(a.email)}')">מחק</button>
-        </td>
-      </tr>`;
-    });
-    document.getElementById('admin-table').innerHTML = h ||
-      '<tr><td colspan="4" style="color:var(--text-muted);padding:20px;">אין מנהלים</td></tr>';
-  });
+                <!-- ---- REPORTS ---- -->
+                <div id="tab-reports" class="tab-pane hidden">
+                    <div class="card">
+                        <div class="card-title">🔍 פילוח צריכת מלאי</div>
+                        <div style="display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap;">
+                            <select class="app-select" id="report-range" style="margin-bottom:0;width:auto;" onchange="generateReport()">
+                                <option value="1">היום</option>
+                                <option value="7">שבוע</option>
+                                <option value="30" selected>30 יום</option>
+                                <option value="90">90 יום</option>
+                                <option value="365">שנה</option>
+                            </select>
+                            <button class="btn w-auto sm btn-green" onclick="downloadReportCSV()">📥 ייצא דוח</button>
+                        </div>
+                        <div id="report-summary" style="font-size:.8em;color:var(--text-muted);font-weight:600;margin-bottom:12px;"></div>
+                        <div id="report-results"></div>
+                    </div>
+                </div>
 
-// ---- LOGS ----
-  db.ref('logs').on('value', snap => {
-    try {
-      logs = [];
-      const data = snap.val();
-      
-      if (data) {
-        // הפיכת האובייקט למערך וסידור מהחדש לישן
-        logs = Object.keys(data).map(key => ({
-          _key: key,
-          ...data[key]
-        })).sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
-      }
+                <!-- ---- INVENTORY ---- -->
+                <div id="tab-inv" class="tab-pane hidden">
 
-      console.log("סונכרנו " + logs.length + " לוגים מהשרת");
+                    <div class="card">
+                        <div class="card-title">➕ הוספת מוצר חדש</div>
+                        <input type="text" id="n-name" class="app-input" placeholder="שם מוצר" list="cat-list-names">
+                        <div class="input-row">
+                            <input type="text" id="n-cat" class="app-input" placeholder="קטגוריה" list="cat-list" style="flex:1;margin-bottom:0;">
+                            <input type="number" id="n-qty" class="app-input" placeholder="כמות" min="0" style="width:100px;margin-bottom:0;">
+                        </div>
+                        <datalist id="cat-list"></datalist>
+                        <datalist id="cat-list-names"></datalist>
+                        <div class="input-row" style="margin-top:8px;">
+                            <input type="number" id="n-min" class="app-input" placeholder="מינימום (סף)" min="0" style="width:130px;margin-bottom:0;">
+                            <input type="text" id="n-barcode" class="app-input" placeholder="📦 ברקוד (אופציונלי)" autocomplete="off" style="flex:1;margin-bottom:0;">
+                        </div>
+                        <div class="input-row" style="margin-top:0;">
+                            <input type="text" id="n-madanet-id"   class="app-input" placeholder='מזהה מד"אנט (אופציונלי)' autocomplete="off" style="width:160px;margin-bottom:0;">
+                            <input type="text" id="n-madanet-name" class="app-input" placeholder='שם מד"אנט (אופציונלי)'  autocomplete="off" style="flex:1;margin-bottom:0;">
+                        </div>
+                        <button class="btn btn-blue" style="margin-top:10px;" onclick="addItem()">➕ הוסף למלאי</button>
+                    </div>
 
-      // עדכון הזיכרון המקומי והתצוגה
-      if (typeof buildLogCache === 'function') buildLogCache();
-      if (typeof filterLogs === 'function') filterLogs();
+                    <div class="card">
+                        <div class="card-title">📤 ייבוא וייצוא</div>
+                        <div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:8px;">
+                            <button class="btn btn-gray w-auto" onclick="downloadInv()">📥 הורד CSV</button>
+                            <button class="btn btn-green w-auto" onclick="document.getElementById('csv-upload').click()">📤 ייבא CSV</button>
+                            <button class="btn btn-red w-auto" onclick="deleteAllInventory()">🗑️ מחק הכל</button>
+                        </div>
+                        <input type="file" id="csv-upload" accept=".csv" style="display:none;" onchange="handleCsvUpload(this)">
+                        <div id="import-progress" class="import-progress">
+                            <div class="ip-bar-bg"><div class="ip-bar-fill" id="ip-fill"></div></div>
+                            <div class="ip-text" id="ip-text">מייבא...</div>
+                        </div>
+                        <div style="font-size:.76em;color:var(--text-muted);margin-top:6px;">
+                            פורמט CSV: שם, קטגוריה, כמות, מינימום, ברקוד, מזהה מד"אנט, שם מד"אנט
+                        </div>
+                    </div>
 
-      // עדכון מספר הלוגים בבועה/סטטיסטיקה
-      const el = document.getElementById('info-logs');
-      if (el) el.textContent = logs.length;
-      
-    } catch (err) {
-      console.error("שגיאה בעיבוד הלוגים:", err);
-    }
-  });
-} // סגירת פונקציית loadData (או הפונקציה המעטפת המקורית שלך)
+                    <div class="search-wrap">
+                        <span class="search-icon">🔍</span>
+                        <input type="text" class="search-input" id="admin-search"
+                            placeholder="חפש פריט, קטגוריה או ברקוד..."
+                            oninput="handleAdminSearch(this)">
+                        <button class="search-clear" id="admin-clear" onclick="clearAdminSearch()">✕</button>
+                    </div>
 
-// קריאה לטעינה הראשונית
-if (typeof loadData === 'function') {
-    loadData();
-}
+                    <div class="chips-row" id="admin-chips">
+                        <span class="chip active-chip" data-f="all" onclick="setAdminFilter('all',this)">הכל</span>
+                        <span class="chip chip-red" data-f="low" onclick="setAdminFilter('low',this)">⚠️ נמוך</span>
+                        <span class="chip chip-red" data-f="out" onclick="setAdminFilter('out',this)">🚨 אזל</span>
+                        <span class="chip" data-f="nobc" onclick="setAdminFilter('nobc',this)">🔍 ללא ברקוד</span>
+                    </div>
 
-/* ================================================================
-   HELPER — HTML escape
-   ================================================================ */
-function esc(str) {
-  if (str == null) return '';
-  return String(str)
-    .replace(/&/g,'&amp;')
-    .replace(/</g,'&lt;')
-    .replace(/>/g,'&gt;')
-    .replace(/"/g,'&quot;');
-}
+                    <div id="admin-count" style="font-size:.78em;color:var(--text-muted);font-weight:600;padding:0 4px 10px;"></div>
+                    <div id="admin-list"></div>
 
-/* ================================================================
-   CATEGORY SUGGESTIONS (datalist)
-   ================================================================ */
-function updateCatSuggestions() {
-  const cats = [...new Set(inv.map(i => i.category).filter(Boolean))].sort();
-  const dl = document.getElementById('cat-list');
-  if (dl) dl.innerHTML = cats.map(c => `<option value="${esc(c)}">`).join('');
-}
+                </div><!-- /tab-inv -->
 
-/* ================================================================
-   LOW STOCK CHECK
-   ================================================================ */
-function getThreshold(item) {
-  return (Number.isFinite(item.minQty) && item.minQty >= 0)
-    ? item.minQty
-    : LOW_STOCK_THRESHOLD;
-}
+                <!-- ---- TEAM ---- -->
+                <div id="tab-team" class="tab-pane hidden">
 
-function checkLowStock() {
-  const low = inv.filter(i => {
-    const q = Number.isFinite(i.qty) ? i.qty : 0;
-    return q <= getThreshold(i);
-  });
-  const out = inv.filter(i => (Number.isFinite(i.qty) ? i.qty : 0) === 0);
+                    <div class="card">
+                        <div class="card-title">➕ הוספת איש צוות</div>
+                        <input type="text" id="t-name" class="app-input" placeholder="שם מלא">
+                        <div class="input-row">
+                            <input type="number" id="t-phone" class="app-input" placeholder="מספר טלפון" style="flex:1;margin-bottom:0;">
+                            <input type="text" id="t-pin" class="app-input" placeholder="קוד אישי" style="width:120px;margin-bottom:0;">
+                        </div>
+                        <button class="btn btn-blue" style="margin-top:10px;" onclick="addTeam()">💾 הוסף לצוות</button>
+                    </div>
 
-  const makeList = items =>
-    items.map(i => {
-      const q = Number.isFinite(i.qty) ? i.qty : 0;
-      const icon = q === 0 ? '🚨' : '⚠️';
-      return `${icon} <b>${esc(i.name)}</b> — נותרו <b style="color:var(--c-red)">${q}</b>`;
-    }).join('<br>');
+                    <div class="card">
+                        <div class="card-title">👥 אנשי צוות פעילים / לא פעילים</div>
+                        <div class="table-outer">
+                            <table>
+                                <thead>
+                                    <tr><th>שם</th><th>טלפון</th><th>קוד</th><th>סטטוס</th><th>פעולות</th></tr>
+                                </thead>
+                                <tbody id="team-table"></tbody>
+                            </table>
+                        </div>
+                    </div>
 
-  // Admin banner
-  const ab  = document.getElementById('admin-alert-banner');
-  const al  = document.getElementById('admin-alert-list');
-  if (ab && al) {
-    if (low.length) { ab.classList.add('show'); al.innerHTML = makeList(low); }
-    else              ab.classList.remove('show');
-  }
+                    <div class="card">
+                        <div class="card-title">👨‍💼 הוספת מנהל</div>
+                        <input type="email" id="admin-email" class="app-input" placeholder="אימייל">
+                        <input type="text" id="admin-pass" class="app-input" placeholder="סיסמה">
+                        <input type="text" id="admin-name" class="app-input" placeholder="שם תצוגה">
+                        <button class="btn btn-blue" style="margin-top:2px;" onclick="addAdmin()">➕ הוסף מנהל</button>
+                    </div>
 
-  // Stats
-  document.getElementById('st-low').textContent = low.length;
-  document.getElementById('st-out').textContent = out.length;
+                    <div class="card">
+                        <div class="card-title">👨‍💼 רשימת מנהלים</div>
+                        <div class="table-outer">
+                            <table>
+                                <thead>
+                                    <tr><th>אימייל</th><th>שם</th><th>סטטוס</th><th>פעולות</th></tr>
+                                </thead>
+                                <tbody id="admin-table"></tbody>
+                            </table>
+                        </div>
+                    </div>
 
-  // Logs tab badge
-  const logBtn = document.getElementById('tab-logs-btn');
-  if (logBtn) {
-    const existing = logBtn.querySelector('.tab-badge');
-    if (existing) existing.remove();
-    if (low.length) {
-      const badge = document.createElement('span');
-      badge.className = 'tab-badge';
-      badge.textContent = low.length;
-      logBtn.prepend(badge);
-    }
-  }
-}
+                </div><!-- /tab-team -->
+
+                <!-- ---- LOGS ---- -->
+                <div id="tab-logs" class="tab-pane hidden">
+                    <div class="card">
+                        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;flex-wrap:wrap;gap:8px;">
+                            <div class="card-title" style="margin-bottom:0;">📜 היסטוריית פעולות</div>
+                            <button class="btn btn-green w-auto sm" onclick="downloadLogs()">📥 ייצא CSV</button>
+                        </div>
+                        <div class="log-filter-row">
+                            <input class="log-filter-input" id="log-f-user" placeholder="🔍 שם משתמש..." oninput="filterLogs()">
+                            <input class="log-filter-input" id="log-f-item" placeholder="🔍 שם פריט..." oninput="filterLogs()">
+                            <select class="log-filter-select" id="log-f-action" onchange="filterLogs()">
+                                <option value="all">כל הפעולות</option>
+                                <option value="take">הוצאות בלבד</option>
+                                <option value="add">הוספות בלבד</option>
+                                <option value="manual">ידני בלבד</option>
+                            </select>
+                        </div>
+                        <div id="logs-count" style="font-size:.78em;color:var(--text-muted);font-weight:600;margin-bottom:8px;"></div>
+                        <div class="table-outer">
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>זמן</th><th>צוות</th><th>פריט</th>
+                                        <th>נלקח</th><th>התווסף</th>
+                                        <th>לפני</th><th>אחרי</th><th>סיבה</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="logs-body"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div><!-- /tab-logs -->
+
+                <!-- ---- SETTINGS ---- -->
+                <div id="tab-settings" class="tab-pane hidden">
+                    <div class="card">
+                        <div class="card-title">⚙️ הגדרות מערכת</div>
+
+                        <div class="setting-row">
+                            <label>סף מלאי נמוך (גלובלי):</label>
+                            <input type="number" id="set-threshold" class="sr-input" value="3" min="0" max="99" style="width:80px;">
+                            <button class="btn w-auto sm btn-blue" onclick="saveThreshold()">שמור</button>
+                        </div>
+
+                        <hr style="border:none;border-top:1px solid var(--border);margin:14px 0;">
+
+                        <div class="setting-row">
+                            <label>הודעה רצה (ticker):</label>
+                            <input type="text" id="set-ticker" class="sr-input" placeholder="הזן הודעה...">
+                            <button class="btn w-auto sm btn-blue" onclick="saveTicker()">שמור</button>
+                        </div>
+
+                        <div class="setting-row">
+                            <label>הודעת מערכת (כתובה):</label>
+                            <input type="text" id="set-msg" class="sr-input" placeholder="הודעה חשובה...">
+                            <button class="btn w-auto sm btn-blue" onclick="saveMsg()">שמור</button>
+                        </div>
+
+                        <hr style="border:none;border-top:1px solid var(--border);margin:14px 0;">
+
+                        <div class="setting-row">
+                            <label>נעילת המערכת:</label>
+                            <button class="btn w-auto sm btn-red" onclick="lockSystem()">🔒 נעל</button>
+                            <button class="btn w-auto sm btn-green" onclick="unlockSystem()">🔓 פתח</button>
+                        </div>
+
+                        <hr style="border:none;border-top:1px solid var(--border);margin:14px 0;">
+
+                        <div class="setting-row">
+                            <label>גרסה נדרשת:</label>
+                            <input type="text" id="set-version" class="sr-input" style="width:90px;" placeholder="4.00">
+                            <button class="btn w-auto sm btn-blue" onclick="saveVersion()">שמור</button>
+                        </div>
+                    </div>
+
+                    <div class="card">
+                        <div class="card-title">🔧 מידע טכני</div>
+                        <p style="font-size:.83em;line-height:2;color:var(--text-soft);">
+                            גרסה נוכחית: <b>v${APP_VERSION}</b><br>
+                            אתר: <b id="info-site">—</b><br>
+                            Firebase DB: <b id="info-db">—</b><br>
+                            סה"כ לוגים: <b id="info-logs">0</b>
+                        </p>
+                    </div>
+                </div><!-- /tab-settings -->
+
+            </div><!-- /content (admin) -->
+        </div><!-- /scr-admin -->
+
+        <!-- ==============================================================
+             USER SCREEN
+             ============================================================== -->
+        <div id="scr-user" class="hidden content">
+
+            <div class="user-hero">
+                <h3 id="u-hello">שלום!</h3>
+                <p>עדכן כמויות, רשום סיבה ולחץ שמירה</p>
+                <div class="user-hero-time" id="u-time"></div>
+            </div>
+
+            <div class="card">
+                <input type="text" id="u-reason" class="app-input" placeholder="✍️ סיבת הוצאה (נסיעה 54, מילוי אמבולנס...)">
+                <button class="scan-btn" onclick="openScanner('find')">
+                    <span class="scan-icon">📷</span>
+                    סרוק ברקוד מוצר
+                </button>
+                <div class="search-wrap" style="margin-bottom:0;">
+                    <span class="search-icon">🔍</span>
+                    <input type="text" id="u-search" class="search-input" placeholder="חפש ציוד..." oninput="handleUserSearch(this)">
+                    <button class="search-clear" id="u-clear" onclick="clearUserSearch()">✕</button>
+                </div>
+            </div>
+
+            <div class="chips-row" id="user-chips">
+                <span class="chip active-chip" data-f="all" onclick="setUserFilter('all',this)">הכל</span>
+                <span class="chip chip-red" data-f="low" onclick="setUserFilter('low',this)">⚠️ נמוך</span>
+                <span class="chip chip-blue" data-f="changed" onclick="setUserFilter('changed',this)">✏️ שונו</span>
+            </div>
+
+            <div id="user-count" style="font-size:.78em;color:var(--text-muted);font-weight:600;padding:0 4px 8px;"></div>
+            <div id="user-stock-list"></div>
+
+            <button id="floating-save" onclick="syncAllChanges()">💾 שמור שינויים (0)</button>
+
+            <div style="height:22px;"></div>
+            <button class="btn btn-gray" onclick="logout()">↩ יציאה</button>
+            <div style="height:90px;"></div>
+
+        </div><!-- /scr-user -->
+
+    </div><!-- /app-main -->
+
+    <!-- ================================================================
+         MODALS
+         ================================================================ -->
+
+    <!-- Confirm overlay -->
+    <div id="confirmOverlay" class="overlay hidden">
+        <div class="confirm-box">
+            <p id="confirmText">האם אתה בטוח?</p>
+            <div class="confirm-actions">
+                <button class="ca-cancel" onclick="confirmNo()">ביטול</button>
+                <button class="ca-danger" id="confirmYesBtn" onclick="confirmYes()">אישור</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Custom modal (async confirm) -->
+    <div id="customModal" class="overlay" style="display:none;">
+        <div class="modal-box">
+            <h3 id="modal-title">אישור</h3>
+            <p id="modal-msg"></p>
+            <div class="modal-actions">
+                <button class="btn btn-outline" id="modal-cancel">ביטול</button>
+                <button class="btn btn-red" id="modal-confirm">אישור</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Input modal (async prompt) -->
+    <div id="inputModal" class="overlay" style="display:none;">
+        <div class="modal-box">
+            <h3 id="im-title"></h3>
+            <p id="im-msg"></p>
+            <input type="text" class="modal-input" id="im-input">
+            <div class="modal-actions">
+                <button class="btn btn-outline" id="im-cancel">ביטול</button>
+                <button class="btn" id="im-ok">אישור</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Barcode scanner -->
+    <div id="scan-modal">
+        <div id="scan-header">
+            <h3 id="scan-title">📷 סרוק ברקוד</h3>
+            <button id="scan-close-btn" onclick="closeScanner()">✕ סגור</button>
+        </div>
+        <div id="scan-video-wrap">
+            <div id="qr-reader"></div>
+        </div>
+        <div id="scan-status">⏳ מאתחל מצלמה...</div>
+        <div id="scan-manual">
+            <input type="text" id="scan-manual-input" placeholder="הזן ברקוד ידנית..." inputmode="numeric">
+            <button id="scan-manual-btn" onclick="submitManualBarcode()">✓ אשר</button>
+        </div>
+        <div id="scan-tip">כוון ברקוד למסגרת · או הזן ידנית</div>
+    </div>
+
+    <!-- Toast -->
+    <div id="toast"></div>
+
+    <!-- ================================================================
+         JAVASCRIPT
+         ================================================================ -->
+    <script>
+
+        /* ================================================================
+           SITE CONFIGURATION
+           ================================================================ */
+        const CURRENT_SITE = 'hodhasharon';
+
+        const SITE_CONFIG = {
+            karnei: {
+                title:      'מערכת מלאי מד"א קרני שומרון',
+                logoUrl:    'https://cdn.jsdelivr.net/gh/ofireng/MDAAppImages/KarneiShomron.png',
+                headerText: 'מד"א קרני שומרון',
+                logoutUrl:  'https://sites.google.com/view/karnei-shomroni',
+                firebase: {
+                    apiKey: "AIzaSyD9ApZOKj7aRUmcAG8MVncsCitOOJBH-cs",
+                    authDomain: "mda-inventory.firebaseapp.com",
+                    databaseURL: "https://meda-inventory-karnei-shomron-default-rtdb.asia-southeast1.firebasedatabase.app",
+                    projectId: "mda-inventory",
+                    storageBucket: "meda-inventory-karnei-shomron.firebasestorage.app",
+                    messagingSenderId: "695234364436",
+                    appId: "1:1081567938760:web:6093630be0672fdc01bdfd"
+                }
+            },
+            nave: {
+                title:      'מערכת מלאי מד"א נווה ימין',
+                logoUrl:    'https://cdn.jsdelivr.net/gh/ofireng/MDAAppImages/NeveYamin.png',
+                headerText: 'מד"א נווה ימין',
+                logoutUrl:  'https://sites.google.com/view/meda-inventory-neve-yamin',
+                firebase: {
+                    apiKey: "AIzaSyBfpldPI5gydNrrF0UaJJUkCKhejJiQq3U",
+                    authDomain: "meda-inventory-neve-yamin.firebaseapp.com",
+                    databaseURL: "https://meda-inventory-neve-yamin-default-rtdb.europe-west1.firebasedatabase.app",
+                    projectId: "meda-inventory-neve-yamin",
+                    storageBucket: "meda-inventory-neve-yamin.firebasestorage.app",
+                    messagingSenderId: "279956329748",
+                    appId: "1:279956329748:web:957413804db84343691e01"
+                }
+            },
+            tnkids: {
+                title:      'מערכת מלאי טיפול נמרץ ילדים',
+                logoUrl:    'https://cdn.jsdelivr.net/gh/ofireng/MDAAppImages/birthLogo.webp',
+                headerText: 'טיפול נמרץ ילדים',
+                logoutUrl:  'https://sites.google.com/view/aten-warehouse',
+                firebase: {
+                    apiKey: "AIzaSyA28chh4_gehbDVvd5mlln3w-G3uB6FX8s",
+                    authDomain: "aten-warehouse.firebaseapp.com",
+                    databaseURL: "https://aten-warehouse-default-rtdb.asia-southeast1.firebasedatabase.app",
+                    projectId: "aten-warehouse",
+                    storageBucket: "aten-warehouse.firebasestorage.app",
+                    messagingSenderId: "1007963863702",
+                    appId: "1:1007963863702:web:57e18aadc387e341dea0b7"
+                }
+            },
+            hodhasharon: {
+                title:      'מערכת מלאי מד"א הוד השרון',
+                logoUrl:    'https://cdn.jsdelivr.net/gh/ofireng/MDAAppImages/HodHasharon2.png',
+                headerText: 'מד"א הוד השרון',
+                logoutUrl:  'https://sites.google.com/view/madehod-hasharon',
+                firebase: {
+                    apiKey: "AIzaSyCe4yRcJF9_3HXze3HGCwKMLNUjDdlORRM",
+                    authDomain: "mda-inventory.firebaseapp.com",
+                    databaseURL: "https://mda-inventory-default-rtdb.europe-west1.firebasedatabase.app",
+                    projectId: "mda-inventory",
+                    storageBucket: "mda-inventory.firebasestorage.app",
+                    messagingSenderId: "1081567938760",
+                    appId: "1:1081567938760:web:6093630be0672fdc01bdfd"
+                }
+            }
+        };
+
+        const CFG = SITE_CONFIG[CURRENT_SITE];
+
+        /* ================================================================
+           FIREBASE INIT
+           ================================================================ */
+        firebase.initializeApp(CFG.firebase);
+        const db = firebase.database();
+
+        /* ================================================================
+           STATE
+           ================================================================ */
+        let inv = [], team = [], logs = [], admins = {};
+        let localChanges = {};
+        let chartPie = null, chartBar = null;
+        let LOW_STOCK_THRESHOLD = 3;
+
+        // filter state
+        let _uFilter = 'all', _uSearch = '';
+        let _aFilter = 'all', _aSearch = '';
+        let _logRows = [];
+
+        /* ================================================================
+           DOM READY — INIT
+           ================================================================ */
+        document.addEventListener('DOMContentLoaded', () => {
+            // Apply site config
+            document.getElementById('page-title').textContent = CFG.title;
+            document.getElementById('site-logo').src = CFG.logoUrl;
+            document.getElementById('header-logo').src = CFG.logoUrl;
+            document.getElementById('site-header').textContent = CFG.headerText;
+
+            // Tech info
+            const infoSite = document.getElementById('info-site');
+            const infoDB   = document.getElementById('info-db');
+            if (infoSite) infoSite.textContent = CURRENT_SITE;
+            if (infoDB)   infoDB.textContent   = CFG.firebase.databaseURL.replace('https://','').split('.')[0];
+
+            // Clock
+            updateClock();
+            setInterval(updateClock, 30000);
+
+            // Settings listener
+            db.ref('settings').on('value', snap => {
+                const s = snap.val() || {};
+                applyGlobalSettings(s);
+            });
+
+            // Focus first field
+            setTimeout(() => document.getElementById('u-phone')?.focus(), 400);
+        });
+
+        /* ================================================================
+           GLOBAL SETTINGS FROM FIREBASE
+           ================================================================ */
+        function applyGlobalSettings(s) {
+            const tickerText = s.ticker || '';
+            const msg        = s.msg    || '';
+
+            // Version check
+            const reqV  = s.version || '';
+            const reqTS = s.TS || 0;
+            let vClass = 'v-ok', vText = '✅ עדכני';
+            if ( (reqV && String(reqV) !== String(APP_VERSION)) ||
+                 (reqTS && APP_BUILD_TS < reqTS) ) {
+                vClass = 'v-bad';
+                vText  = '❌ גרסה ישנה — רענן! (F5)';
+            }
+
+            const tsStr = s.TS ? ` | ${new Date(s.TS).toLocaleString('he-IL')}` : '';
+            const tickerHTML = `${tickerText ? tickerText + ' | ' : ''}v${APP_VERSION}${tsStr} | <span class="${vClass}">${vText}</span>`;
+
+            ['ticker','ticker-login'].forEach(id => {
+                const el = document.getElementById(id);
+                if (el) el.innerHTML = tickerHTML;
+            });
+
+            const msgEl = document.getElementById('system-msg');
+            if (msgEl) msgEl.textContent = msg;
+
+            // Low stock threshold
+            if (Number.isFinite(s.lowStockThreshold)) {
+                LOW_STOCK_THRESHOLD = s.lowStockThreshold;
+                const el = document.getElementById('set-threshold');
+                if (el) el.value = LOW_STOCK_THRESHOLD;
+            }
+
+            // Populate settings fields (if admin is viewing them)
+            const stField = document.getElementById('set-ticker');
+            if (stField && !stField.dataset.editing) stField.value = tickerText;
+            const msgField = document.getElementById('set-msg');
+            if (msgField && !msgField.dataset.editing) msgField.value = msg;
+
+            // Locked
+            if (s.isLocked) {
+                document.body.innerHTML = `
+                    <div style="min-height:100vh;display:flex;align-items:center;justify-content:center;
+                                background:var(--c-navy);color:white;font-family:Heebo,sans-serif;
+                                text-align:center;padding:40px;direction:rtl;">
+                        <div>
+                            <div style="font-size:3em;margin-bottom:20px;">⛔</div>
+                            <h2 style="margin-bottom:10px;">המערכת נעולה זמנית</h2>
+                            <p style="opacity:.5;">${msg || ''}</p>
+                        </div>
+                    </div>`;
+            }
+        }
+
+        /* ================================================================
+           CLOCK
+           ================================================================ */
+        function updateClock() {
+            const el = document.getElementById('u-time');
+            if (!el) return;
+            el.textContent = new Date().toLocaleString('he-IL', {
+                weekday: 'long', day: 'numeric', month: 'long',
+                hour: '2-digit', minute: '2-digit'
+            });
+        }
+
+        /* ================================================================
+           LOAD DATA — Firebase real-time listeners
+           ================================================================ */
+        function loadData() {
+
+            // ---- INVENTORY ----
+            db.ref('inventory').on('value', snap => {
+                inv = [];
+                snap.forEach(c => {
+                    const v = c.val();
+                    // Skip null / malformed entries
+                    if (!v || typeof v.name !== 'string' || !v.name.trim()) return;
+                    inv.push({ id: c.key, ...v });
+                });
+
+                console.log(`[MDA v4] Loaded ${inv.length} inventory items`);
+                updateCatSuggestions();
+
+                // Reset filters on full data reload
+                _uSearch = ''; _uFilter = 'all';
+                _aSearch = ''; _aFilter = 'all';
+                syncFilterChipUI('user-chips',  'all');
+                syncFilterChipUI('admin-chips', 'all');
+
+                renderUser();
+                renderAdmin();
+                updateStats();
+                checkLowStock();
+            });
+
+            // ---- TEAM ----
+            db.ref('team').on('value', snap => {
+                team = [];
+                let h = '';
+                snap.forEach(c => {
+                    const t = { id: c.key, ...c.val() };
+                    team.push(t);
+                    const active = t.active !== false;
+                    h += `<tr>
+                        <td>${esc(t.name)}</td>
+                        <td>${esc(t.phone)}</td>
+                        <td><code>${esc(t.pin)}</code></td>
+                        <td style="color:${active?'var(--c-green-light)':'var(--c-red)'};font-weight:800;">${active?'פעיל':'לא פעיל'}</td>
+                        <td>
+                            <button class="btn sm w-auto btn-gold" style="margin:2px;" onclick="toggleTeamStatus('${t.id}',${!active})">${active?'השבת':'הפעל'}</button>
+                            <button class="btn sm w-auto btn-red" style="margin:2px;" onclick="deleteTeamMember('${t.id}','${esc(t.name)}')">מחק</button>
+                        </td>
+                    </tr>`;
+                });
+                document.getElementById('team-table').innerHTML = h ||
+                    '<tr><td colspan="5" style="color:var(--text-muted);padding:20px;">אין אנשי צוות</td></tr>';
+
+                // Update count stat
+                document.getElementById('st-users').textContent = team.length;
+            });
+
+            // ---- ADMINS ----
+            db.ref('admins').on('value', snap => {
+                admins = {};
+                let h = '';
+                snap.forEach(c => {
+                    const a = c.val(); const id = c.key;
+                    if (a.active) admins[a.email] = { password: a.password, displayName: a.displayName, id };
+                    const active = a.active;
+                    h += `<tr>
+                        <td>${esc(a.email)}</td>
+                        <td>${esc(a.displayName)}</td>
+                        <td style="color:${active?'var(--c-green-light)':'var(--c-red)'};font-weight:800;">${active?'פעיל':'לא פעיל'}</td>
+                        <td>
+                            <button class="btn sm w-auto btn-gold" style="margin:2px;" onclick="toggleAdminStatus('${id}',${!active})">${active?'השבת':'הפעל'}</button>
+                            <button class="btn sm w-auto btn-red" style="margin:2px;" onclick="deleteAdmin('${id}','${esc(a.email)}')">מחק</button>
+                        </td>
+                    </tr>`;
+                });
+                document.getElementById('admin-table').innerHTML = h ||
+                    '<tr><td colspan="4" style="color:var(--text-muted);padding:20px;">אין מנהלים</td></tr>';
+            });
+
+            // ---- LOGS ----
+            db.ref('logs').on('value', snap => {
+                try {
+                    logs = [];
+                    const data = snap.val();
+                    
+                    if (data) {
+                        // הפיכת האובייקט למערך וסידור מהחדש לישן
+                        logs = Object.keys(data).map(key => ({
+                            _key: key,
+                            ...data[key]
+                        })).sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
+                    }
+
+                    console.log("סונכרנו " + logs.length + " לוגים מהשרת");
+
+                    // עדכון הזיכרון המקומי והתצוגה
+                    if (typeof buildLogCache === 'function') buildLogCache();
+                    if (typeof filterLogs === 'function') filterLogs();
+
+                    // עדכון מספר הלוגים בבועה/סטטיסטיקה
+                    const el = document.getElementById('info-logs');
+                    if (el) el.textContent = logs.length;
+                    
+                } catch (err) {
+                    console.error("שגיאה בעיבוד הלוגים:", err);
+                }
+            });
+        } // סגירת פונקציית loadData (או הפונקציה המעטפת המקורית שלך)
+
+        // קריאה לטעינה הראשונית
+        if (typeof loadData === 'function') {
+            loadData();
+        }
+
+        /* ================================================================
+           HELPER — HTML escape
+           ================================================================ */
+        function esc(str) {
+            if (str == null) return '';
+            return String(str)
+                .replace(/&/g,'&amp;')
+                .replace(/</g,'&lt;')
+                .replace(/>/g,'&gt;')
+                .replace(/"/g,'&quot;');
+        }
+
+        /* ================================================================
+           CATEGORY SUGGESTIONS (datalist)
+           ================================================================ */
+        function updateCatSuggestions() {
+            const cats = [...new Set(inv.map(i => i.category).filter(Boolean))].sort();
+            const dl = document.getElementById('cat-list');
+            if (dl) dl.innerHTML = cats.map(c => `<option value="${esc(c)}">`).join('');
+        }
+
+        /* ================================================================
+           LOW STOCK CHECK
+           ================================================================ */
+        function getThreshold(item) {
+            return (Number.isFinite(item.minQty) && item.minQty >= 0)
+                ? item.minQty
+                : LOW_STOCK_THRESHOLD;
+        }
+
+        function checkLowStock() {
+            const low = inv.filter(i => {
+                const q = Number.isFinite(i.qty) ? i.qty : 0;
+                return q <= getThreshold(i);
+            });
+            const out = inv.filter(i => (Number.isFinite(i.qty) ? i.qty : 0) === 0);
+
+            const makeList = items =>
+                items.map(i => {
+                    const q = Number.isFinite(i.qty) ? i.qty : 0;
+                    const icon = q === 0 ? '🚨' : '⚠️';
+                    return `${icon} <b>${esc(i.name)}</b> — נותרו <b style="color:var(--c-red)">${q}</b>`;
+                }).join('<br>');
+
+            // Admin banner
+            const ab  = document.getElementById('admin-alert-banner');
+            const al  = document.getElementById('admin-alert-list');
+            if (ab && al) {
+                if (low.length) { ab.classList.add('show'); al.innerHTML = makeList(low); }
+                else              ab.classList.remove('show');
+            }
+
+            // Stats
+            document.getElementById('st-low').textContent = low.length;
+            document.getElementById('st-out').textContent = out.length;
+
+            // Logs tab badge
+            const logBtn = document.getElementById('tab-logs-btn');
+            if (logBtn) {
+                const existing = logBtn.querySelector('.tab-badge');
+                if (existing) existing.remove();
+                if (low.length) {
+                    const badge = document.createElement('span');
+                    badge.className = 'tab-badge';
+                    badge.textContent = low.length;
+                    logBtn.prepend(badge);
+                }
+            }
+        }
 
 /* ================================================================
    STATS + CHARTS
@@ -3273,36 +3273,64 @@ async function handleCsvUpload(input) {
       let imported = 0, updated = 0, row = 0;
 
       for (let idx = 1; idx < lines.length; idx++) {
-        const parts = lines[idx].split(',');
+        const parts = lines[idx].split(',').map(p => p.trim());
         if (parts.length < 3) continue;
-        const n    = parts[0].trim(), c = parts[1].trim();
-        const q    = parseInt(parts[2], 10) || 0;
+        const category    = parts[0];
+        const itemName    = parts[1];
+
+        const newQuantityRaw = parts[2];
+        const newQuantity = newQuantityRaw === "" ? null : Number(newQuantityRaw);
+        if (newQuantity !== null && Number.isNaN(newQuantity)) continue;
+        
         const m    = parts[3] ? parseInt(parts[3], 10) : undefined;
         const bc   = (parts[4] || '').trim();
         const mid  = (parts[5] || '').trim();
         const mname= (parts[6] || '').trim();
-        if (!n || !c) continue;
+        if (!itemName || !category) continue;
+        const nameNorm = safeLower(itemName);
+        const ex = inv.find(i => safeLower(i.name) === nameNorm);
 
-        const ex = inv.find(i => i.name.toLowerCase() === n.toLowerCase());
         if (ex?.id) {
-          const diff = q - (ex.qty ?? 0);
-          if (diff !== 0) await changeQuantity({ itemId:ex.id, delta:diff, user:window.curU||'CSV', reason:'ייבוא CSV', action:diff>0?'add':'sub' });
-          const upd = { category: c, name: n };
-          if (Number.isFinite(m) && m >= 0) upd.minQty = m;
-          if (bc)    upd.barcode      = bc;
-          if (mid)   upd.madanet_id   = mid;
-          if (mname) upd.madanet_name = mname;
-          await db.ref('inventory/' + ex.id).update(upd);
-          updated++;
+          if (newQuantity !== null) {
+            const diff = newQuantity - (ex.qty ?? 0);
+            if (diff !== 0) {
+              const oldQty = ex.qty ?? 0;
+              const newQty = oldQty + diff;
+              showToast(`${itemName}: ${oldQty} → ${newQty}`);
+              await changeQuantity({
+                  itemId: ex.id,
+                  delta: diff,
+                  user: window.curU || 'CSV',
+                  reason: 'ייבוא CSV',
+                  action: diff > 0 ? 'add' : 'sub'
+              });
+              
+              const upd = { category: category, name: itemName };
+              if (Number.isFinite(m) && m >= 0) upd.minQty = m;
+              if (bc)    upd.barcode      = bc;
+              if (mid)   upd.madanet_id   = mid;
+              if (mname) upd.madanet_name = mname;
+              await db.ref('inventory/' + ex.id).update(upd);
+              updated++;
+            }
+          }
         } else {
+          // new item
           const ref  = db.ref('inventory').push();
-          const data = { name:n, category:c, qty:0 };
+          const data = { name:itemName, category:category, qty:0 };
           if (Number.isFinite(m) && m >= 0) data.minQty = m;
           if (bc)    data.barcode      = bc;
           if (mid)   data.madanet_id   = mid;
           if (mname) data.madanet_name = mname;
           await ref.set(data);
-          if (q > 0) await changeQuantity({ itemId:ref.key, delta:q, user:window.curU||'CSV', reason:'כמות התחלתית (CSV)', action:'add' });
+          if (newQuantity > 0) 
+          await changeQuantity({ 
+            itemId:ref.key, 
+            delta:newQuantity, 
+            user:window.curU||'CSV', 
+            reason:'כמות התחלתית (CSV)', 
+            action:'add' 
+          });
           imported++;
         }
 
@@ -3543,7 +3571,9 @@ async function deleteAdmin(id, email) {
 function saveTicker()    { db.ref('settings/ticker').set(document.getElementById('set-ticker').value); showToast('✓ הודעה עודכנה'); }
 function saveMsg()       { db.ref('settings/msg').set(document.getElementById('set-msg').value); showToast('✓ הודעת מערכת עודכנה'); }
 function saveVersion()   { db.ref('settings/version').set(document.getElementById('set-version').value); showToast('✓ גרסה עודכנה'); }
-
+function safeLower(v) {
+    return (typeof v === 'string') ? v.toLowerCase() : '';
+}
 function saveThreshold() {
   const v = parseInt(document.getElementById('set-threshold').value, 10);
   if (!Number.isFinite(v) || v < 0) return showToast('ערך לא תקין', 'error');
@@ -3936,44 +3966,44 @@ function viewImage(src) {
   document.getElementById('imgViewer').style.display = 'flex';
 }
 
-</script>
+    </script>
 
-<!-- ================================================================
-     IMAGE UPLOAD MODAL
-     ================================================================ -->
-<div id="imgModal" style="position:fixed;inset:0;background:rgba(13,27,42,.72);backdrop-filter:blur(8px);z-index:9500;display:none;align-items:center;justify-content:center;">
-  <div style="background:var(--surface);border-radius:var(--r-lg);padding:26px 22px 20px;width:92%;max-width:360px;box-shadow:var(--sh-xl);animation:slideUp .25s cubic-bezier(.34,1.56,.64,1) both;">
-    <h3 style="font-size:1.05em;font-weight:800;color:var(--c-navy);margin-bottom:16px;display:flex;align-items:center;gap:8px;">🖼️ תמונת מוצר</h3>
-    <div style="width:100%;height:170px;border-radius:var(--r-md);border:2px dashed var(--border);background:var(--bg);display:flex;align-items:center;justify-content:center;overflow:hidden;margin-bottom:14px;position:relative;">
-      <div id="img-preview-placeholder" style="text-align:center;color:var(--text-muted);">
-        <div style="font-size:2.5em;margin-bottom:6px;">🖼️</div>
-        <p style="font-size:.8em;font-weight:600;">בחר תמונה להצגה</p>
-      </div>
-      <img id="img-preview" src="" alt="" style="display:none;width:100%;height:100%;object-fit:contain;">
+    <!-- ================================================================
+         IMAGE UPLOAD MODAL
+         ================================================================ -->
+    <div id="imgModal" style="position:fixed;inset:0;background:rgba(13,27,42,.72);backdrop-filter:blur(8px);z-index:9500;display:none;align-items:center;justify-content:center;">
+        <div style="background:var(--surface);border-radius:var(--r-lg);padding:26px 22px 20px;width:92%;max-width:360px;box-shadow:var(--sh-xl);animation:slideUp .25s cubic-bezier(.34,1.56,.64,1) both;">
+            <h3 style="font-size:1.05em;font-weight:800;color:var(--c-navy);margin-bottom:16px;display:flex;align-items:center;gap:8px;">🖼️ תמונת מוצר</h3>
+            <div style="width:100%;height:170px;border-radius:var(--r-md);border:2px dashed var(--border);background:var(--bg);display:flex;align-items:center;justify-content:center;overflow:hidden;margin-bottom:14px;position:relative;">
+                <div id="img-preview-placeholder" style="text-align:center;color:var(--text-muted);">
+                    <div style="font-size:2.5em;margin-bottom:6px;">🖼️</div>
+                    <p style="font-size:.8em;font-weight:600;">בחר תמונה להצגה</p>
+                </div>
+                <img id="img-preview" src="" alt="" style="display:none;width:100%;height:100%;object-fit:contain;">
+            </div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px;">
+                <button onclick="document.getElementById('img-file-input').click()" style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;padding:14px 8px;border:1.5px solid var(--border);border-radius:var(--r-md);background:var(--surface);cursor:pointer;font-family:'Heebo',sans-serif;font-size:.82em;font-weight:700;color:var(--text-soft);transition:var(--tr);" onmouseover="this.style.borderColor='var(--c-blue)';this.style.color='var(--c-blue)';this.style.background='#e3f2fd';" onmouseout="this.style.borderColor='var(--border)';this.style.color='var(--text-soft)';this.style.background='var(--surface)';">
+                    <span style="font-size:1.7em;">📁</span><span>בחר קובץ</span>
+                </button>
+                <button onclick="document.getElementById('img-camera-input').click()" style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;padding:14px 8px;border:1.5px solid var(--border);border-radius:var(--r-md);background:var(--surface);cursor:pointer;font-family:'Heebo',sans-serif;font-size:.82em;font-weight:700;color:var(--text-soft);transition:var(--tr);" onmouseover="this.style.borderColor='var(--c-blue)';this.style.color='var(--c-blue)';this.style.background='#e3f2fd';" onmouseout="this.style.borderColor='var(--border)';this.style.color='var(--text-soft)';this.style.background='var(--surface)';">
+                    <span style="font-size:1.7em;">📸</span><span>צלם עכשיו</span>
+                </button>
+            </div>
+            <input type="file" id="img-file-input"   accept="image/*"                    style="display:none;" onchange="_imgFileChosen(this)">
+            <input type="file" id="img-camera-input" accept="image/*" capture="environment" style="display:none;" onchange="_imgFileChosen(this)">
+            <div style="display:flex;gap:8px;">
+                <button id="img-save-btn"   class="btn btn-blue"  onclick="_imgSave()"   disabled style="flex:1;">💾 שמור</button>
+                <button id="img-delete-btn" class="btn btn-red"   onclick="_imgDelete()" style="flex:0 0 auto;display:none;">🗑️</button>
+                <button                     class="btn btn-ghost" onclick="_imgClose()"  style="flex:1;">ביטול</button>
+            </div>
+        </div>
     </div>
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px;">
-      <button onclick="document.getElementById('img-file-input').click()" style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;padding:14px 8px;border:1.5px solid var(--border);border-radius:var(--r-md);background:var(--surface);cursor:pointer;font-family:'Heebo',sans-serif;font-size:.82em;font-weight:700;color:var(--text-soft);transition:var(--tr);" onmouseover="this.style.borderColor='var(--c-blue)';this.style.color='var(--c-blue)';this.style.background='#e3f2fd';" onmouseout="this.style.borderColor='var(--border)';this.style.color='var(--text-soft)';this.style.background='var(--surface)';">
-        <span style="font-size:1.7em;">📁</span><span>בחר קובץ</span>
-      </button>
-      <button onclick="document.getElementById('img-camera-input').click()" style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;padding:14px 8px;border:1.5px solid var(--border);border-radius:var(--r-md);background:var(--surface);cursor:pointer;font-family:'Heebo',sans-serif;font-size:.82em;font-weight:700;color:var(--text-soft);transition:var(--tr);" onmouseover="this.style.borderColor='var(--c-blue)';this.style.color='var(--c-blue)';this.style.background='#e3f2fd';" onmouseout="this.style.borderColor='var(--border)';this.style.color='var(--text-soft)';this.style.background='var(--surface)';">
-        <span style="font-size:1.7em;">📸</span><span>צלם עכשיו</span>
-      </button>
-    </div>
-    <input type="file" id="img-file-input"   accept="image/*"                    style="display:none;" onchange="_imgFileChosen(this)">
-    <input type="file" id="img-camera-input" accept="image/*" capture="environment" style="display:none;" onchange="_imgFileChosen(this)">
-    <div style="display:flex;gap:8px;">
-      <button id="img-save-btn"   class="btn btn-blue"  onclick="_imgSave()"   disabled style="flex:1;">💾 שמור</button>
-      <button id="img-delete-btn" class="btn btn-red"   onclick="_imgDelete()" style="flex:0 0 auto;display:none;">🗑️</button>
-      <button                     class="btn btn-ghost" onclick="_imgClose()"  style="flex:1;">ביטול</button>
-    </div>
-  </div>
-</div>
 
-<!-- Full-size image viewer -->
-<div id="imgViewer" onclick="this.classList.remove('open')" style="position:fixed;inset:0;background:rgba(0,0,0,.92);z-index:10001;display:none;align-items:center;justify-content:center;flex-direction:column;gap:16px;">
-  <img id="imgViewer-img" src="" alt="" style="max-width:94vw;max-height:80vh;border-radius:var(--r-md);box-shadow:var(--sh-xl);object-fit:contain;">
-  <button id="imgViewer-close" onclick="event.stopPropagation();document.getElementById('imgViewer').style.display='none';" style="background:rgba(255,255,255,.15);color:white;border:1px solid rgba(255,255,255,.2);border-radius:var(--r-full);padding:9px 28px;font-family:'Heebo',sans-serif;font-weight:800;cursor:pointer;font-size:.9em;">סגור</button>
-</div>
+    <!-- Full-size image viewer -->
+    <div id="imgViewer" onclick="this.classList.remove('open')" style="position:fixed;inset:0;background:rgba(0,0,0,.92);z-index:10001;display:none;align-items:center;justify-content:center;flex-direction:column;gap:16px;">
+        <img id="imgViewer-img" src="" alt="" style="max-width:94vw;max-height:80vh;border-radius:var(--r-md);box-shadow:var(--sh-xl);object-fit:contain;">
+        <button id="imgViewer-close" onclick="event.stopPropagation();document.getElementById('imgViewer').style.display='none';" style="background:rgba(255,255,255,.15);color:white;border:1px solid rgba(255,255,255,.2);border-radius:var(--r-full);padding:9px 28px;font-family:'Heebo',sans-serif;font-weight:800;cursor:pointer;font-size:.9em;">סגור</button>
+    </div>
 
 </body>
 </html>
