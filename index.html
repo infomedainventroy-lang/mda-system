@@ -7,7 +7,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <script>
-  const APP_VERSION = "1.09";
+  const APP_VERSION = "1.10";
   const APP_BUILD_TS = Date.now();
 </script>
 <title id="page-title">מערכת מלאי מד"א</title>
@@ -399,6 +399,14 @@ body {
   color: white;
   font-size: .83em;
   font-weight: 700;
+}
+
+/* Google badge in team table */
+.google-badge {
+  display: inline-flex; align-items: center; gap: 4px;
+  background: #e8f0fe; color: #1a73e8;
+  border-radius: var(--r-full); padding: 2px 8px;
+  font-size: .7em; font-weight: 800;
 }
 
 .err-msg {
@@ -1434,7 +1442,20 @@ tr:hover td { background: var(--bg); }
       <input class="login-input" type="password" id="u-pass" placeholder="קוד אישי" inputmode="numeric" autocomplete="current-password">
     </div>
     <button class="btn-login" onclick="login('user')">כניסה למערכת</button>
-    <p id="err-user" class="err-msg">⚠️ מספר טלפון או קוד אישי שגויים</p>
+
+    <div class="login-divider"><hr><span>או התחבר עם</span><hr></div>
+
+    <button class="btn-google" id="btn-google-user" onclick="signInWithGoogle('user')">
+      <svg id="google-icon-user" width="18" height="18" viewBox="0 0 48 48">
+        <path fill="#FFC107" d="M43.6 20H24v8h11.3C33.7 33.1 29.3 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3 0 5.8 1.1 7.9 3l5.7-5.7C34.1 6.5 29.3 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20c11 0 19.6-8 19.6-20 0-1.3-.1-2.7-.4-4z"/>
+        <path fill="#FF3D00" d="M6.3 14.7l6.6 4.8C14.5 15.1 18.9 12 24 12c3 0 5.8 1.1 7.9 3l5.7-5.7C34.1 6.5 29.3 4 24 4 16.3 4 9.7 8.3 6.3 14.7z"/>
+        <path fill="#4CAF50" d="M24 44c5.2 0 9.9-1.9 13.5-5.1l-6.2-5.2C29.4 35.5 26.8 36 24 36c-5.2 0-9.7-2.9-11.3-7l-6.5 5C9.6 39.6 16.3 44 24 44z"/>
+        <path fill="#1976D2" d="M43.6 20H24v8h11.3c-.8 2.3-2.3 4.2-4.3 5.6l6.2 5.2C40.9 35.2 44 30 44 24c0-1.3-.1-2.7-.4-4z"/>
+      </svg>
+      <span id="google-btn-text-user">כניסה עם Google</span>
+    </button>
+
+    <p id="err-user" class="err-msg">⚠️ מספר טלפון, קוד שגויים — או Google לא מקושר</p>
   </div>
 
   <!-- Admin login -->
@@ -1456,17 +1477,17 @@ tr:hover td { background: var(--bg); }
     </div>
 
     <!-- Google Button -->
-    <button class="btn-google" id="btn-google" onclick="signInWithGoogle()">
-      <svg id="google-icon" width="18" height="18" viewBox="0 0 48 48">
+    <button class="btn-google" id="btn-google-admin" onclick="signInWithGoogle('admin')">
+      <svg id="google-icon-admin" width="18" height="18" viewBox="0 0 48 48">
         <path fill="#FFC107" d="M43.6 20H24v8h11.3C33.7 33.1 29.3 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3 0 5.8 1.1 7.9 3l5.7-5.7C34.1 6.5 29.3 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20c11 0 19.6-8 19.6-20 0-1.3-.1-2.7-.4-4z"/>
         <path fill="#FF3D00" d="M6.3 14.7l6.6 4.8C14.5 15.1 18.9 12 24 12c3 0 5.8 1.1 7.9 3l5.7-5.7C34.1 6.5 29.3 4 24 4 16.3 4 9.7 8.3 6.3 14.7z"/>
         <path fill="#4CAF50" d="M24 44c5.2 0 9.9-1.9 13.5-5.1l-6.2-5.2C29.4 35.5 26.8 36 24 36c-5.2 0-9.7-2.9-11.3-7l-6.5 5C9.6 39.6 16.3 44 24 44z"/>
         <path fill="#1976D2" d="M43.6 20H24v8h11.3c-.8 2.3-2.3 4.2-4.3 5.6l6.2 5.2C40.9 35.2 44 30 44 24c0-1.3-.1-2.7-.4-4z"/>
       </svg>
-      <span id="google-btn-text">כניסה עם Google</span>
+      <span id="google-btn-text-admin">כניסה עם Google</span>
     </button>
 
-    <p id="err-admin" class="err-msg">⚠️ אימייל או סיסמה שגויים</p>
+    <p id="err-admin" class="err-msg">⚠️ אימייל, סיסמה שגויים — או Google לא מורשה</p>
   </div>
 
 </div><!-- /scr-login -->
@@ -1612,13 +1633,14 @@ tr:hover td { background: var(--bg); }
             <input type="number" id="t-phone" class="app-input" placeholder="מספר טלפון" style="flex:1;margin-bottom:0;">
             <input type="text" id="t-pin" class="app-input" placeholder="קוד אישי" style="width:120px;margin-bottom:0;">
           </div>
-          <button class="btn btn-blue" style="margin-top:10px;" onclick="addTeam()">💾 הוסף לצוות</button>
+          <input type="email" id="t-email" class="app-input" placeholder="📧 Gmail לכניסה עם Google (אופציונלי)">
+          <button class="btn btn-blue" style="margin-top:4px;" onclick="addTeam()">💾 הוסף לצוות</button>
         </div>
         <div class="card">
           <div class="card-title">👥 אנשי צוות פעילים / לא פעילים</div>
           <div class="table-outer">
             <table>
-              <thead><tr><th>שם</th><th>טלפון</th><th>קוד</th><th>סטטוס</th><th>פעולות</th></tr></thead>
+              <thead><tr><th>שם</th><th>טלפון</th><th>קוד</th><th>Gmail / Google</th><th>סטטוס</th><th>פעולות</th></tr></thead>
               <tbody id="team-table"></tbody>
             </table>
           </div>
@@ -2314,19 +2336,13 @@ document.addEventListener('DOMContentLoaded', () => {
     applyGlobalSettings(s);
   });
 
-  // Auth state observer — handles Google redirect (if popup blocked, fallback to redirect)
-  auth.onAuthStateChanged(async user => {
-    if (user && !window._googleLoginHandled) {
-      // Could be a redirect result — try to process
-      try {
-        const result = await auth.getRedirectResult();
-        if (result && result.user) {
-          window._googleLoginHandled = true;
-          await _processGoogleUser(result.user);
-        }
-      } catch(e) { /* no redirect result */ }
+  // Handle Google redirect result (popup-blocked fallback)
+  auth.getRedirectResult().then(result => {
+    if (result && result.user) {
+      const role = window._pendingGoogleRole || 'user';
+      _handleGoogleUser(result.user, role);
     }
-  });
+  }).catch(e => console.warn('redirect result:', e));
 
   setTimeout(() => document.getElementById('u-phone')?.focus(), 4500);
 
@@ -2416,9 +2432,13 @@ function loadData() {
       const t = { id: c.key, ...c.val() };
       team.push(t);
       const active = t.active !== false;
+      const gmailTd = t.email
+        ? `<td><span class="google-badge" title="${esc(t.email)}"><svg width="10" height="10" viewBox="0 0 48 48" style="flex-shrink:0"><path fill="#FFC107" d="M43.6 20H24v8h11.3C33.7 33.1 29.3 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3 0 5.8 1.1 7.9 3l5.7-5.7C34.1 6.5 29.3 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20c11 0 19.6-8 19.6-20 0-1.3-.1-2.7-.4-4z"/></svg>${esc(t.email)}</span></td>`
+        : `<td style="color:var(--text-muted);font-size:.8em;text-align:center;">—</td>`;
       h += `<tr>
         <td>${esc(t.name)}</td><td>${esc(t.phone)}</td>
         <td><code>${esc(t.pin)}</code></td>
+        ${gmailTd}
         <td style="color:${active?'var(--c-green-light)':'var(--c-red)'};font-weight:800;">${active?'פעיל':'לא פעיל'}</td>
         <td>
           <button class="btn sm w-auto btn-gold" style="margin:2px;" onclick="toggleTeamStatus('${t.id}',${!active})">${active?'השבת':'הפעל'}</button>
@@ -2427,7 +2447,7 @@ function loadData() {
       </tr>`;
     });
     document.getElementById('team-table').innerHTML = h ||
-      '<tr><td colspan="5" style="color:var(--text-muted);padding:20px;">אין אנשי צוות</td></tr>';
+      '<tr><td colspan="6" style="color:var(--text-muted);padding:20px;">אין אנשי צוות</td></tr>';
     document.getElementById('st-users').textContent = team.length;
   });
 
@@ -2643,18 +2663,26 @@ async function logout() {
 }
 
 /* ================================================================
-   GOOGLE SIGN-IN
+   GOOGLE SIGN-IN — works for both 'user' (staff) and 'admin' roles
    ================================================================ */
-async function signInWithGoogle() {
-  const btn      = document.getElementById('btn-google');
-  const btnText  = document.getElementById('google-btn-text');
-  const iconSlot = document.getElementById('google-icon');
+const _GOOGLE_SVG = `<svg width="18" height="18" viewBox="0 0 48 48"><path fill="#FFC107" d="M43.6 20H24v8h11.3C33.7 33.1 29.3 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3 0 5.8 1.1 7.9 3l5.7-5.7C34.1 6.5 29.3 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20c11 0 19.6-8 19.6-20 0-1.3-.1-2.7-.4-4z"/><path fill="#FF3D00" d="M6.3 14.7l6.6 4.8C14.5 15.1 18.9 12 24 12c3 0 5.8 1.1 7.9 3l5.7-5.7C34.1 6.5 29.3 4 24 4 16.3 4 9.7 8.3 6.3 14.7z"/><path fill="#4CAF50" d="M24 44c5.2 0 9.9-1.9 13.5-5.1l-6.2-5.2C29.4 35.5 26.8 36 24 36c-5.2 0-9.7-2.9-11.3-7l-6.5 5C9.6 39.6 16.3 44 24 44z"/><path fill="#1976D2" d="M43.6 20H24v8h11.3c-.8 2.3-2.3 4.2-4.3 5.6l6.2 5.2C40.9 35.2 44 30 44 24c0-1.3-.1-2.7-.4-4z"/></svg>`;
 
-  // Show spinner
+async function signInWithGoogle(role) {
+  const btnId  = role === 'admin' ? 'btn-google-admin'      : 'btn-google-user';
+  const iconId = role === 'admin' ? 'google-icon-admin'     : 'google-icon-user';
+  const textId = role === 'admin' ? 'google-btn-text-admin' : 'google-btn-text-user';
+  const errId  = role === 'admin' ? 'err-admin'             : 'err-user';
+
+  const btn  = document.getElementById(btnId);
+  const icon = document.getElementById(iconId);
+  const text = document.getElementById(textId);
+  if (!btn) return;
+
   btn.disabled = true;
-  iconSlot.outerHTML = '<div id="google-icon" class="google-spinner"></div>';
-  btnText.textContent = 'מתחבר...';
+  icon.outerHTML = `<div id="${iconId}" class="google-spinner"></div>`;
+  text.textContent = 'מתחבר...';
 
+  window._pendingGoogleRole = role;
   const provider = new firebase.auth.GoogleAuthProvider();
   provider.setCustomParameters({ prompt: 'select_account' });
 
@@ -2663,92 +2691,87 @@ async function signInWithGoogle() {
     try {
       result = await auth.signInWithPopup(provider);
     } catch (popupErr) {
-      // Popup blocked — fallback to redirect
-      if (popupErr.code === 'auth/popup-blocked' || popupErr.code === 'auth/popup-closed-by-user') {
-        if (popupErr.code === 'auth/popup-blocked') {
-          await auth.signInWithRedirect(provider);
-          return; // page will reload
-        }
-        // User closed popup — reset button
-        _resetGoogleBtn();
-        return;
+      if (popupErr.code === 'auth/popup-blocked') {
+        await auth.signInWithRedirect(provider); return;
+      }
+      if (popupErr.code === 'auth/popup-closed-by-user' || popupErr.code === 'auth/cancelled-popup-request') {
+        _resetGoogleBtn(role); return;
       }
       throw popupErr;
     }
-
-    window._googleLoginHandled = true;
-    await _processGoogleUser(result.user);
-
+    await _handleGoogleUser(result.user, role);
   } catch (err) {
     console.error('Google sign-in error:', err);
-    _resetGoogleBtn();
-    const msgs = {
-      'auth/account-exists-with-different-credential': 'חשבון זה כבר קיים עם שיטת כניסה אחרת',
-      'auth/network-request-failed': 'שגיאת רשת — בדוק חיבור לאינטרנט',
-      'auth/too-many-requests': 'יותר מדי ניסיונות — נסה שוב מאוחר יותר',
-    };
-    showToast(msgs[err.code] || 'שגיאה בהתחברות: ' + (err.message || err.code), 'error');
+    _resetGoogleBtn(role);
+    _showGoogleErr(errId, err.message || err.code);
   }
 }
 
-async function _processGoogleUser(user) {
+async function _handleGoogleUser(user, role) {
   const email = user.email;
-  if (!email) { await auth.signOut(); showToast('לא הצלחנו לזהות אימייל', 'error'); _resetGoogleBtn(); return; }
+  if (!email) { await auth.signOut(); _resetGoogleBtn(role); return; }
 
-  // Look up email in /admins
-  const snap = await db.ref('admins').orderByChild('email').equalTo(email).once('value');
-
-  if (snap.exists()) {
-    const adminData = Object.values(snap.val())[0];
-    if (adminData.active) {
-      window.curU      = adminData.displayName || user.displayName || email;
-      window._googlePhoto = user.photoURL || null;
-
-      // Update header pill with profile photo
-      const pill = document.getElementById('header-user');
-      if (window._googlePhoto) {
-        pill.innerHTML = `<img src="${esc(window._googlePhoto)}" alt="" onerror="this.style.display='none'"> ⚙️ ${esc(window.curU)}`;
-      } else {
-        pill.innerHTML = `⚙️ ${esc(window.curU)}`;
-      }
-
-      showApp('scr-admin');
-      showToast('ברוך הבא, ' + window.curU + ' 👋');
-      return;
+  if (role === 'admin') {
+    // Check /admins node
+    const snap = await db.ref('admins').orderByChild('email').equalTo(email).once('value');
+    if (snap.exists()) {
+      const d = Object.values(snap.val())[0];
+      if (!d.active) { await auth.signOut(); _resetGoogleBtn('admin'); _showGoogleErr('err-admin', 'חשבון מושבת — פנה למנהל ראשי'); return; }
+      _enterApp('admin', d.displayName || user.displayName || email, user.photoURL);
     } else {
-      await auth.signOut();
-      _resetGoogleBtn();
-      showToast('חשבון זה מושבת — פנה למנהל ראשי', 'error');
-      return;
+      await auth.signOut(); _resetGoogleBtn('admin');
+      _showGoogleErr('err-admin', email + ' אינו רשום כמנהל');
+    }
+  } else {
+    // Check /team node by email field
+    const snap = await db.ref('team').orderByChild('email').equalTo(email).once('value');
+    if (snap.exists()) {
+      const d = Object.values(snap.val())[0];
+      if (d.active === false) { await auth.signOut(); _resetGoogleBtn('user'); _showGoogleErr('err-user', 'חשבון מושבת — פנה למנהל'); return; }
+      _enterApp('user', d.name || user.displayName || email, user.photoURL);
+    } else {
+      await auth.signOut(); _resetGoogleBtn('user');
+      _showGoogleErr('err-user', email + ' לא מקושר לאיש צוות — פנה למנהל');
     }
   }
-
-  // Email not registered as admin
-  await auth.signOut();
-  _resetGoogleBtn();
-  const errEl = document.getElementById('err-admin');
-  errEl.textContent = `⚠️ ${email} אינו רשום כמנהל`;
-  errEl.classList.remove('show');
-  void errEl.offsetWidth;
-  errEl.classList.add('show');
-  setTimeout(() => errEl.classList.remove('show'), 4000);
 }
 
-function _resetGoogleBtn() {
-  const btn = document.getElementById('btn-google');
-  if (!btn) return;
-  btn.disabled = false;
-  const spinner = document.getElementById('google-icon');
-  if (spinner) {
-    spinner.outerHTML = `<svg id="google-icon" width="18" height="18" viewBox="0 0 48 48">
-      <path fill="#FFC107" d="M43.6 20H24v8h11.3C33.7 33.1 29.3 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3 0 5.8 1.1 7.9 3l5.7-5.7C34.1 6.5 29.3 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20c11 0 19.6-8 19.6-20 0-1.3-.1-2.7-.4-4z"/>
-      <path fill="#FF3D00" d="M6.3 14.7l6.6 4.8C14.5 15.1 18.9 12 24 12c3 0 5.8 1.1 7.9 3l5.7-5.7C34.1 6.5 29.3 4 24 4 16.3 4 9.7 8.3 6.3 14.7z"/>
-      <path fill="#4CAF50" d="M24 44c5.2 0 9.9-1.9 13.5-5.1l-6.2-5.2C29.4 35.5 26.8 36 24 36c-5.2 0-9.7-2.9-11.3-7l-6.5 5C9.6 39.6 16.3 44 24 44z"/>
-      <path fill="#1976D2" d="M43.6 20H24v8h11.3c-.8 2.3-2.3 4.2-4.3 5.6l6.2 5.2C40.9 35.2 44 30 44 24c0-1.3-.1-2.7-.4-4z"/>
-    </svg>`;
+function _enterApp(role, name, photoURL) {
+  window.curU = name;
+  window._googlePhoto = photoURL || null;
+  const pill = document.getElementById('header-user');
+  const prefix = role === 'admin' ? '⚙️ ' : '';
+  if (window._googlePhoto) {
+    pill.innerHTML = `<img src="${esc(window._googlePhoto)}" alt="" onerror="this.style.display='none'"> ${prefix}${esc(name)}`;
+  } else {
+    pill.textContent = prefix + name;
   }
-  const btnText = document.getElementById('google-btn-text');
-  if (btnText) btnText.textContent = 'כניסה עם Google';
+  if (role === 'admin') {
+    showApp('scr-admin');
+  } else {
+    document.getElementById('u-hello').textContent = 'שלום ' + name + ' 👋';
+    showApp('scr-user');
+  }
+  showToast('ברוך הבא, ' + name + ' 👋');
+}
+
+function _showGoogleErr(errId, msg) {
+  const errEl = document.getElementById(errId);
+  if (!errEl) return;
+  errEl.textContent = '⚠️ ' + msg;
+  errEl.classList.remove('show'); void errEl.offsetWidth; errEl.classList.add('show');
+  setTimeout(() => errEl.classList.remove('show'), 5000);
+}
+
+function _resetGoogleBtn(role) {
+  const btnId  = role === 'admin' ? 'btn-google-admin'      : 'btn-google-user';
+  const iconId = role === 'admin' ? 'google-icon-admin'     : 'google-icon-user';
+  const textId = role === 'admin' ? 'google-btn-text-admin' : 'google-btn-text-user';
+  const btn = document.getElementById(btnId); if (!btn) return;
+  btn.disabled = false;
+  const spinner = document.getElementById(iconId);
+  if (spinner) spinner.outerHTML = _GOOGLE_SVG.replace('<svg ', `<svg id="${iconId}" `);
+  const t = document.getElementById(textId); if (t) t.textContent = 'כניסה עם Google';
 }
 
 /* ================================================================
@@ -3336,14 +3359,19 @@ function downloadLogs() {
    TEAM MANAGEMENT
    ================================================================ */
 function addTeam() {
-  const n = document.getElementById('t-name').value.trim();
-  const p = document.getElementById('t-phone').value.trim();
+  const n  = document.getElementById('t-name').value.trim();
+  const p  = document.getElementById('t-phone').value.trim();
   const pi = document.getElementById('t-pin').value.trim();
+  const em = (document.getElementById('t-email')?.value || '').trim().toLowerCase();
   if (!n||!p||!pi) return showToast('נא למלא שם, טלפון וקוד', 'error');
-  if (team.some(t=>String(t.phone).trim()===p)) return showToast('מספר טלפון כבר קיים', 'error');
-  db.ref('team').push({ name:n, phone:p, pin:pi, active:true, createdAt:Date.now() });
-  ['t-name','t-phone','t-pin'].forEach(id=>{ const e=document.getElementById(id); if(e) e.value=''; });
-  showToast('✓ איש צוות נוסף');
+  if (team.some(t => String(t.phone).trim() === p)) return showToast('מספר טלפון כבר קיים', 'error');
+  if (em && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(em)) return showToast('כתובת Gmail לא תקינה', 'error');
+  if (em && team.some(t => (t.email||'').toLowerCase() === em)) return showToast('Gmail זה כבר רשום לאיש צוות אחר', 'error');
+  const data = { name:n, phone:p, pin:pi, active:true, createdAt:Date.now() };
+  if (em) data.email = em;
+  db.ref('team').push(data);
+  ['t-name','t-phone','t-pin','t-email'].forEach(id=>{ const e=document.getElementById(id); if(e) e.value=''; });
+  showToast('✓ איש צוות נוסף' + (em ? ' (Google מקושר ✓)' : ''));
 }
 async function toggleTeamStatus(id, newStatus) {
   if (!await asyncConfirm('שינוי סטטוס', `${newStatus?'להפעיל':'להשבית'} איש צוות?`)) return;
