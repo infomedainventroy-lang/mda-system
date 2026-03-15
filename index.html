@@ -7,7 +7,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <script>
-  const APP_VERSION = "1.10";
+  const APP_VERSION = "1.11";
   const APP_BUILD_TS = Date.now();
 </script>
 <title id="page-title">מערכת מלאי מד"א</title>
@@ -1398,6 +1398,49 @@ tr:hover td { background: var(--bg); }
   #toast { font-size: .82em; }
   .modal-box { padding: 22px 18px; }
 }
+
+/* ================================================================
+   BIOMETRIC UI
+   ================================================================ */
+.bio-banner {
+  background: linear-gradient(135deg, #e8eaf6 0%, #e3f2fd 100%);
+  border: 1.5px solid #9fa8da;
+  border-radius: var(--r-md);
+  padding: 16px 18px;
+  margin-bottom: 14px;
+  box-shadow: var(--sh-xs);
+  animation: fadeUp .3s var(--ease) both;
+}
+.bio-device-row {
+  display: flex; align-items: center; gap: 8px;
+  padding: 6px 0; border-bottom: 1px solid rgba(0,0,0,.06);
+}
+.bio-device-row:last-child { border-bottom: none; }
+.bio-chip {
+  display: inline-flex; align-items: center; gap: 5px;
+  background: #3f51b5; color: white;
+  border-radius: var(--r-full); padding: 3px 11px;
+  font-size: .72em; font-weight: 800;
+}
+.bio-chip.active { background: var(--c-green); }
+/* quick-login card on login page */
+#bio-quick-login {
+  border-color: rgba(100,120,255,.35) !important;
+  background: rgba(63,81,181,.12) !important;
+}
+#bio-quick-login h3 { font-size: 1em; }
+.btn-bio {
+  width: 100%; padding: 13px 14px;
+  border: 1.5px solid rgba(255,255,255,.3); border-radius: var(--r-sm);
+  font-family: 'Heebo', sans-serif; font-size: 14px; font-weight: 800;
+  cursor: pointer; transition: var(--tr); letter-spacing: .01em; margin-top: 8px;
+  background: linear-gradient(135deg, rgba(63,81,181,.7) 0%, rgba(25,50,160,.8) 100%);
+  color: white; display: flex; align-items: center; justify-content: center; gap: 10px;
+}
+.btn-bio:hover { filter: brightness(1.15); transform: translateY(-1px); box-shadow: 0 4px 20px rgba(63,81,181,.4); }
+.btn-bio:active { transform: translateY(0); }
+.btn-bio:disabled { opacity: .55; cursor: not-allowed; transform: none; filter: none; }
+
 </style>
 </head>
 <body>
@@ -1428,6 +1471,21 @@ tr:hover td { background: var(--bg); }
     <img id="site-logo" src="" alt="לוגו">
     <p class="login-tagline">מערכת ניהול מלאי</p>
     <span class="login-version-badge">v<script>document.write(APP_VERSION)</script></span>
+  </div>
+
+  <!-- Biometric quick-login (shown only when device has registered credential) -->
+  <div id="bio-quick-login" class="login-card hidden">
+    <h3>🔐 כניסה מהירה</h3>
+    <div id="bio-user-name-display" style="font-size:.84em;color:rgba(255,255,255,.55);margin-bottom:4px;font-weight:700;"></div>
+    <div id="bio-role-display" style="font-size:.72em;color:rgba(255,255,255,.35);margin-bottom:14px;"></div>
+    <button id="bio-login-btn" class="btn-bio" onclick="biometricLogin()">
+      <span style="font-size:1.4em;">🔐</span>
+      <span>כניסה ביומטרית · טביעת אצבע / Face ID</span>
+    </button>
+    <button onclick="clearStoredBioCredential();initBiometricLoginButton();"
+      style="width:100%;margin-top:9px;padding:9px;border:none;background:transparent;color:rgba(255,255,255,.3);font-family:'Heebo',sans-serif;font-size:.78em;cursor:pointer;letter-spacing:.04em;">
+      ↩ כניסה עם משתמש אחר
+    </button>
   </div>
 
   <!-- Staff login -->
@@ -1537,6 +1595,9 @@ tr:hover td { background: var(--bg); }
           <div class="stat-card warning"><span id="st-out" class="stat-num">0</span><div class="stat-label">אזל מהמלאי</div></div>
           <div class="stat-card"><span id="st-users" class="stat-num">0</span><div class="stat-label">אנשי צוות</div></div>
         </div>
+        <!-- Biometric management banner (admin) -->
+        <div id="bio-setup-banner-admin" class="bio-banner hidden"></div>
+
         <div class="card">
           <div class="card-title">📊 פיזור לפי קטגוריה</div>
           <div class="chart-wrap"><canvas id="chartPie"></canvas></div>
@@ -1749,6 +1810,9 @@ tr:hover td { background: var(--bg); }
       <p>עדכן כמויות, רשום סיבה ולחץ שמירה</p>
       <div class="user-hero-time" id="u-time"></div>
     </div>
+
+    <!-- Biometric management banner -->
+    <div id="bio-setup-banner" class="bio-banner hidden"></div>
 
     <div class="card">
       <input type="text" id="u-reason" class="app-input" placeholder="✍️ סיבת הוצאה (נסיעה 54, מילוי אמבולנס...)">
@@ -2345,6 +2409,7 @@ document.addEventListener('DOMContentLoaded', () => {
   }).catch(e => console.warn('redirect result:', e));
 
   setTimeout(() => document.getElementById('u-phone')?.focus(), 4500);
+  initBiometricLoginButton(); // show biometric quick-login if device is registered
 
   loadData();
 });
@@ -2600,6 +2665,7 @@ function login(role) {
       window._googlePhoto = null;
       document.getElementById('header-user').innerHTML = '⚙️ ' + esc(window.curU);
       showApp('scr-admin');
+      setTimeout(() => showBiometricBanner('admin'), 600);
     } else {
       flashErr('err-admin');
     }
@@ -2614,6 +2680,7 @@ function login(role) {
       document.getElementById('u-hello').textContent = 'שלום ' + m.name + ' 👋';
       document.getElementById('header-user').textContent = m.name;
       showApp('scr-user');
+      setTimeout(() => showBiometricBanner('user'), 600);
     } else {
       flashErr('err-user');
     }
@@ -2753,6 +2820,7 @@ function _enterApp(role, name, photoURL) {
     showApp('scr-user');
   }
   showToast('ברוך הבא, ' + name + ' 👋');
+  setTimeout(() => showBiometricBanner(role), 600);
 }
 
 function _showGoogleErr(errId, msg) {
@@ -3672,6 +3740,291 @@ function viewImage(src) {
   document.getElementById('imgViewer-img').src = src;
   document.getElementById('imgViewer').style.display = 'flex';
 }
+
+/* ================================================================
+   BIOMETRIC AUTHENTICATION — WebAuthn (Passkeys)
+   Supports staff + admin. Up to 3 devices per user.
+   ================================================================ */
+
+const BIO_LS_KEY = 'mda_bio_v1';
+
+/* ── Helpers ── */
+function randomChallenge(len = 32) {
+  return crypto.getRandomValues(new Uint8Array(len));
+}
+function b64ToBytes(b64) {
+  try {
+    const s = b64.replace(/-/g, '+').replace(/_/g, '/');
+    const bin = atob(s);
+    return Uint8Array.from(bin, ch => ch.charCodeAt(0));
+  } catch(e) { return new Uint8Array(0); }
+}
+function bytesToB64(bytes) {
+  const arr = bytes instanceof ArrayBuffer ? new Uint8Array(bytes) : bytes;
+  let bin = '';
+  arr.forEach(b => bin += String.fromCharCode(b));
+  return btoa(bin);
+}
+function getStoredBioCred() {
+  try { return JSON.parse(localStorage.getItem(BIO_LS_KEY)); } catch(e) { return null; }
+}
+function setStoredBioCred(data) {
+  try { localStorage.setItem(BIO_LS_KEY, JSON.stringify(data)); } catch(e) {}
+}
+function clearStoredBioCredential() {
+  try { localStorage.removeItem(BIO_LS_KEY); } catch(e) {}
+}
+async function isBiometricAvailable() {
+  try {
+    if (!window.PublicKeyCredential) return false;
+    if (window.location.protocol === 'file:') return false;
+    return await PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable();
+  } catch(e) { return false; }
+}
+
+/* ── Login page: show quick-biometric button if device is registered ── */
+async function initBiometricLoginButton() {
+  const el = document.getElementById('bio-quick-login');
+  if (!el) return;
+  const cred = getStoredBioCred();
+  if (!cred) { el.classList.add('hidden'); return; }
+  const avail = await isBiometricAvailable();
+  if (!avail) { el.classList.add('hidden'); return; }
+  const nameEl = document.getElementById('bio-user-name-display');
+  const roleEl = document.getElementById('bio-role-display');
+  if (nameEl) nameEl.textContent = cred.userName || '';
+  if (roleEl) roleEl.textContent = cred.role === 'admin' ? '⚙️ מנהל' : '👨‍⚕️ צוות';
+  el.classList.remove('hidden');
+}
+
+/* ── Quick biometric login from the login screen ── */
+async function biometricLogin() {
+  const cred = getStoredBioCred();
+  if (!cred) return showToast('לא נמצא זיהוי ביומטרי במכשיר זה', 'error');
+  const btn = document.getElementById('bio-login-btn');
+  if (btn) { btn.disabled = true; btn.innerHTML = '<span style="font-size:1.2em">⏳</span> מאמת...'; }
+  try {
+    const assertion = await navigator.credentials.get({
+      publicKey: {
+        challenge: randomChallenge(),
+        allowCredentials: [{ id: b64ToBytes(cred.credentialIdB64), type: 'public-key' }],
+        userVerification: 'required',
+        timeout: 60000
+      }
+    });
+    if (!assertion) throw new Error('no_assertion');
+
+    // Load user from Firebase to make sure they're still active
+    if (cred.role === 'admin') {
+      const snap = await db.ref('admins/' + cred.userId).once('value');
+      const d = snap.val();
+      if (!d || !d.active) throw new Error('inactive');
+      window.curU = d.displayName || cred.userName;
+      window._googlePhoto = null;
+      document.getElementById('header-user').innerHTML = '⚙️ ' + esc(window.curU);
+      showApp('scr-admin');
+    } else {
+      const snap = await db.ref('team/' + cred.userId).once('value');
+      const d = snap.val();
+      if (!d || d.active === false) throw new Error('inactive');
+      window.curU = d.name || cred.userName;
+      window._googlePhoto = null;
+      document.getElementById('u-hello').textContent = 'שלום ' + window.curU + ' 👋';
+      document.getElementById('header-user').textContent = window.curU;
+      showApp('scr-user');
+    }
+    showToast('ברוך הבא, ' + window.curU + ' 🔐');
+    setTimeout(() => showBiometricBanner(cred.role), 600);
+
+  } catch(err) {
+    console.warn('biometric login error:', err);
+    if (btn) {
+      btn.disabled = false;
+      btn.innerHTML = '<span style="font-size:1.4em">🔐</span> <span>כניסה ביומטרית · טביעת אצבע / Face ID</span>';
+    }
+    if (err.name === 'NotAllowedError') return showToast('אימות ביומטרי בוטל', 'warning');
+    if (err.message === 'inactive') {
+      showToast('חשבון מושבת — פנה למנהל', 'error');
+      clearStoredBioCredential(); initBiometricLoginButton(); return;
+    }
+    showToast('שגיאה בזיהוי ביומטרי — נסה כניסה רגילה', 'error');
+  }
+}
+
+/* ── Get current logged-in user's Firebase ID ── */
+async function _getBioUserId(role) {
+  if (role !== 'admin') {
+    // Search team array (already loaded)
+    const m = team.find(t => t.name === window.curU && t.active !== false);
+    if (m) return m.id;
+    // fallback: Firebase query
+    const snap = await db.ref('team').orderByChild('name').equalTo(window.curU).once('value');
+    if (snap.exists()) return Object.keys(snap.val())[0];
+    return null;
+  } else {
+    // Use in-memory admins map
+    for (const [, d] of Object.entries(admins)) {
+      if (d.displayName === window.curU) return d.id;
+    }
+    const snap = await db.ref('admins').orderByChild('displayName').equalTo(window.curU).once('value');
+    if (snap.exists()) return Object.keys(snap.val())[0];
+    return null;
+  }
+}
+
+/* ── Show biometric management banner after login ── */
+async function showBiometricBanner(role) {
+  const bannerId = role === 'admin' ? 'bio-setup-banner-admin' : 'bio-setup-banner';
+  const banner = document.getElementById(bannerId);
+  if (!banner) return;
+
+  const avail = await isBiometricAvailable();
+  if (!avail) { banner.classList.add('hidden'); return; }
+
+  const userId = await _getBioUserId(role);
+  if (!userId) { banner.classList.add('hidden'); return; }
+
+  const bioPath = (role === 'admin' ? 'admins/' : 'team/') + userId + '/biometrics';
+  const snap = await db.ref(bioPath).once('value');
+  const biometrics = snap.val() || {};
+  const count = Object.keys(biometrics).length;
+
+  const stored = getStoredBioCred();
+  const thisDeviceKey = stored && stored.userId === userId ? stored.bioKey : null;
+  const thisDeviceRegistered = !!(stored && stored.userId === userId);
+
+  banner.innerHTML = _buildBioBanner(biometrics, userId, role, count, thisDeviceRegistered);
+  banner.classList.remove('hidden');
+}
+
+function _buildBioBanner(biometrics, userId, role, count, thisDeviceRegistered) {
+  const entries = Object.entries(biometrics);
+  const stored  = getStoredBioCred();
+
+  const deviceRows = entries.map(([key, b]) => {
+    const isThis = stored && stored.bioKey === key;
+    return `<div class="bio-device-row">
+      <span style="font-size:1.1em;">📱</span>
+      <span style="flex:1;font-size:.82em;font-weight:700;color:var(--text);">${esc(b.deviceLabel || 'מכשיר לא ידוע')}${isThis ? ' <span style="color:var(--c-blue);font-size:.85em;">(מכשיר זה)</span>' : ''}</span>
+      <span style="font-size:.7em;color:var(--text-muted);margin-left:6px;">${b.createdAt ? new Date(b.createdAt).toLocaleDateString('he-IL') : ''}</span>
+      <button onclick="removeBiometric('${esc(key)}','${esc(userId)}','${esc(role)}')"
+        style="background:none;border:none;cursor:pointer;font-size:.85em;color:var(--c-red);padding:2px 6px;border-radius:4px;transition:var(--tr);"
+        title="הסר מכשיר">🗑️</button>
+    </div>`;
+  }).join('');
+
+  const addBtn = count < 3 && !thisDeviceRegistered
+    ? `<button class="btn btn-blue w-auto sm" style="margin-top:10px;" onclick="registerBiometric()">➕ הוסף מכשיר זה (${count}/3)</button>`
+    : count < 3 && thisDeviceRegistered
+    ? `<div style="font-size:.76em;color:var(--c-green);font-weight:800;margin-top:8px;">✅ מכשיר זה כבר רשום · ${count}/3</div>`
+    : `<div style="font-size:.76em;color:var(--c-orange);font-weight:700;margin-top:8px;">⚠️ הגעת למגבלת 3 מכשירים</div>`;
+
+  const headerIcon = thisDeviceRegistered ? '🔐' : '🔓';
+  const headerText = thisDeviceRegistered ? 'זיהוי ביומטרי פעיל' : 'הגדרת זיהוי ביומטרי';
+
+  return `
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;">
+      <span style="font-size:1.4em;">${headerIcon}</span>
+      <span style="font-weight:800;font-size:.92em;color:var(--c-navy);flex:1;">${headerText}</span>
+      ${count > 0 ? `<span style="background:#3f51b5;color:white;border-radius:var(--r-full);padding:2px 10px;font-size:.72em;font-weight:800;">${count}/3 מכשירים</span>` : ''}
+      <button onclick="document.getElementById('${role==='admin'?'bio-setup-banner-admin':'bio-setup-banner'}').classList.add('hidden')"
+        style="background:none;border:none;cursor:pointer;color:var(--text-muted);font-size:1.1em;line-height:1;padding:2px 4px;">✕</button>
+    </div>
+    ${count > 0 ? `<div style="background:rgba(0,0,0,.03);border-radius:var(--r-sm);padding:4px 8px;margin-bottom:6px;">${deviceRows}</div>` : `<p style="font-size:.8em;color:var(--text-muted);margin-bottom:8px;">כנס מהר יותר בפעם הבאה עם טביעת אצבע או Face ID</p>`}
+    ${!thisDeviceRegistered && count < 3
+      ? `<button class="btn btn-blue w-auto" style="margin-top:4px;" onclick="registerBiometric()">🔐 הוסף זיהוי ביומטרי למכשיר הזה</button>`
+      : addBtn}`;
+}
+
+/* ── Register biometric for current device ── */
+async function registerBiometric() {
+  const avail = await isBiometricAvailable();
+  if (!avail) return showToast('זיהוי ביומטרי אינו נתמך במכשיר זה', 'error');
+
+  const role = document.getElementById('scr-admin').classList.contains('hidden') ? 'user' : 'admin';
+  const userId = await _getBioUserId(role);
+  if (!userId) return showToast('שגיאה: לא נמצא משתמש', 'error');
+
+  const bioPath = (role === 'admin' ? 'admins/' : 'team/') + userId + '/biometrics';
+  const snap = await db.ref(bioPath).once('value');
+  const existing = snap.val() || {};
+  if (Object.keys(existing).length >= 3) return showToast('הגעת למגבלת 3 מכשירים ביומטריים', 'warning');
+
+  // Detect device label
+  const ua = navigator.userAgent;
+  let deviceLabel = 'מכשיר';
+  if (/iPhone/.test(ua))        deviceLabel = 'iPhone';
+  else if (/iPad/.test(ua))     deviceLabel = 'iPad';
+  else if (/Android/.test(ua))  deviceLabel = 'Android';
+  else if (/Macintosh/.test(ua)) deviceLabel = 'Mac';
+  else if (/Windows/.test(ua))  deviceLabel = 'Windows PC';
+  else if (/Linux/.test(ua))    deviceLabel = 'Linux';
+  deviceLabel += ' · ' + new Date().toLocaleDateString('he-IL');
+
+  try {
+    const rpId = window.location.hostname || 'localhost';
+    const userIdBytes = new TextEncoder().encode(userId.padEnd(8, '0').substring(0, 64));
+    const credential = await navigator.credentials.create({
+      publicKey: {
+        challenge: randomChallenge(),
+        rp: { name: 'מד"א מלאי', id: rpId },
+        user: {
+          id: userIdBytes,
+          name: window.curU || userId,
+          displayName: window.curU || userId
+        },
+        pubKeyCredParams: [
+          { alg: -7,   type: 'public-key' },
+          { alg: -257, type: 'public-key' }
+        ],
+        authenticatorSelection: {
+          authenticatorAttachment: 'platform',
+          userVerification: 'required',
+          residentKey: 'preferred'
+        },
+        timeout: 60000
+      }
+    });
+
+    if (!credential) throw new Error('no credential');
+
+    const credentialIdB64 = bytesToB64(new Uint8Array(credential.rawId));
+
+    // Save to Firebase
+    const bioRef = db.ref(bioPath).push();
+    await bioRef.set({ credentialIdB64, deviceLabel, createdAt: Date.now() });
+
+    // Save to localStorage with the Firebase key so we can identify "this device"
+    setStoredBioCred({ credentialIdB64, userId, role, userName: window.curU, deviceLabel, bioKey: bioRef.key });
+
+    showToast('✅ זיהוי ביומטרי נוסף! תוכל להתחבר במהירות בפעם הבאה 🔐');
+    setTimeout(() => showBiometricBanner(role), 400);
+
+  } catch(err) {
+    console.warn('biometric register error:', err);
+    if (err.name === 'NotAllowedError')    return showToast('הרשמה בוטלה', 'warning');
+    if (err.name === 'InvalidStateError')  return showToast('מכשיר זה כבר רשום', 'warning');
+    if (err.name === 'NotSupportedError')  return showToast('המכשיר אינו תומך בזיהוי ביומטרי', 'error');
+    showToast('שגיאה ברישום ביומטרי: ' + (err.message || err.name), 'error');
+  }
+}
+
+/* ── Remove a biometric registration ── */
+async function removeBiometric(bioKey, userId, role) {
+  const ok = await asyncConfirm('הסרת זיהוי ביומטרי', 'להסיר את המכשיר הזה מהרשימה?');
+  if (!ok) return;
+  const bioPath = (role === 'admin' ? 'admins/' : 'team/') + userId + '/biometrics/' + bioKey;
+  await db.ref(bioPath).remove();
+  // Clear localStorage if it was this device
+  const stored = getStoredBioCred();
+  if (stored && stored.bioKey === bioKey) {
+    clearStoredBioCredential();
+    initBiometricLoginButton();
+  }
+  showToast('🗑️ מכשיר הוסר מהרשימה הביומטרית');
+  setTimeout(() => showBiometricBanner(role), 300);
+}
+
 
 </script>
 </body>
