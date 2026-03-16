@@ -3192,6 +3192,7 @@ function renderUser() {
           <span class="item-name">${esc(i.name)}${isOut?'<span class="badge badge-out">חסר</span>':isLow?'<span class="badge badge-low">נמוך</span>':''}</span>
           <span class="item-meta ${isOut?'is-out':isLow?'is-low':''}">
             במלאי: <span class="qty-val">${qty}</span>${metaExtra.length?' · <span style="font-size:.88em;opacity:.7;">'+metaExtra.join(' · ')+'</span>':''}
+          ${i.madanet_id?`<span class="barcode-tag has-bc" style="background:#e3f2fd;color:#0277bd;" title="${esc(i.madanet_name||'')}">מד"אנט: ${esc(i.madanet_id)}</span>`:''}
           </span>
           <div class="stock-bar" style="margin-top:6px;">
             <div class="stock-bar-fill" style="width:${barPct}%;background:${barColor};"></div>
