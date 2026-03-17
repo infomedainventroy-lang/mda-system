@@ -7,8 +7,8 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <script>
-  const APP_VERSION = "1.13";
-  const APP_BUILD_TS = Date.now();
+  const APP_VERSION = "1.14";
+  const APP_BUILD_TS = 1773773371653;
 </script>
 <title id="page-title">מערכת מלאי מד"א</title>
 
@@ -1617,7 +1617,7 @@ tr:hover td { background: var(--bg); }
   <canvas id="splash-c"></canvas>
   <div id="sp-logo">
     <img id="sp-logo-img" src="" alt="לוגו">
-    <div class="sp-t1">מערכת ניהול מלאי - הוד השרון</div>
+    <div class="sp-t1" id="splash-title">מערכת ניהול מלאי - הוד השרון</div>
     <div class="sp-t2">מגן דוד אדום</div>
   </div>
   <div id="sp-wipe-t"></div>
@@ -2409,6 +2409,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // Apply site config
   document.getElementById('page-title').textContent  = CFG.title;
+  document.getElementById('splash-title').textContent = CFG.title;
   document.getElementById('site-logo').src            = CFG.logoUrl;
   document.getElementById('header-logo').src          = CFG.logoUrl;
   document.getElementById('site-header').textContent  = CFG.headerText;
