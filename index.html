@@ -1732,6 +1732,8 @@ tr:hover td { background: var(--bg); }
 
   <div id="system-msg"></div>
 
+  <!-- Ticker bar (app) -->
+
   <!-- App Header -->
   <div class="app-header">
     <div class="header-logo">
@@ -1747,6 +1749,7 @@ tr:hover td { background: var(--bg); }
   <div id="scr-admin" class="hidden">
     <nav class="nav-tabs" id="admin-nav">
       <button class="tab-btn active" onclick="showTab('tab-dash',this)">📊 דאשבורד</button>
+      <button class="tab-btn" onclick="showTab('tab-reports',this)">📈 דוחות</button>
       <button class="tab-btn" onclick="showTab('tab-inv',this)">📦 מלאי</button>
       <button class="tab-btn" onclick="showTab('tab-team',this)">👥 צוות</button>
       <button id="tab-logs-btn" class="tab-btn" onclick="showTab('tab-logs',this)">📜 לוגים</button>
@@ -1782,23 +1785,178 @@ tr:hover td { background: var(--bg); }
       </div>
 
       <!-- REPORTS -->
-      <div id="tab-reports" class="tab-pane hidden">
-        <div class="card">
-          <div class="card-title">🔍 פילוח צריכת מלאי</div>
-          <div style="display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap;">
-            <select class="app-select" id="report-range" style="margin-bottom:0;width:auto;" onchange="generateReport()">
-              <option value="1">היום</option>
-              <option value="7">שבוע</option>
-              <option value="30" selected>30 יום</option>
-              <option value="90">90 יום</option>
-              <option value="365">שנה</option>
-            </select>
-            <button class="btn w-auto sm btn-green" onclick="downloadReportCSV()">📥 ייצא דוח</button>
-          </div>
-          <div id="report-summary" style="font-size:.8em;color:var(--text-muted);font-weight:600;margin-bottom:12px;"></div>
-          <div id="report-results"></div>
+<!-- REPORTS -->
+<div id="tab-reports" class="tab-pane hidden">
+
+  <style>
+    .rpt-mode-tabs { display:flex; gap:0; margin-bottom:18px; border-radius:var(--r-md); overflow:hidden; border:1.5px solid var(--border); background:var(--bg); }
+    .rpt-mode-btn  { flex:1; padding:11px 6px; border:none; background:none; font-family:'Heebo',sans-serif; font-size:.84em; font-weight:700; color:var(--text-muted); cursor:pointer; transition:var(--tr); border-left:1px solid var(--border); }
+    .rpt-mode-btn:last-child { border-left:none; }
+    .rpt-mode-btn.active { background:var(--c-navy); color:white; }
+    .rpt-mode-btn:hover:not(.active) { background:var(--border); color:var(--text); }
+    .rpt-panel { display:none; }
+    .rpt-panel.open { display:flex; flex-wrap:wrap; gap:10px; align-items:flex-end; margin-bottom:14px; }
+    .rpt-label { font-size:.8em; font-weight:700; color:var(--text-soft); margin-bottom:4px; display:block; }
+    .rpt-select { padding:10px 12px; border:1.5px solid var(--border); border-radius:var(--r-sm); font-family:'Heebo',sans-serif; font-size:14px; background:var(--surface); color:var(--text); outline:none; cursor:pointer; }
+    .rpt-select:focus { border-color:var(--c-blue); }
+    .rpt-date-input { padding:10px 12px; border:1.5px solid var(--border); border-radius:var(--r-sm); font-family:'Heebo',sans-serif; font-size:14px; background:var(--surface); color:var(--text); outline:none; }
+    .rpt-date-input:focus { border-color:var(--c-blue); }
+    .rpt-summary-bar {
+      display:flex; gap:10px; flex-wrap:wrap; margin-bottom:16px;
+      padding:14px 16px; background:linear-gradient(135deg,var(--c-navy) 0%,#1a3a5c 100%);
+      border-radius:var(--r-md); color:white;
+    }
+    .rpt-sum-item { text-align:center; flex:1; min-width:80px; }
+    .rpt-sum-num  { font-size:1.6em; font-weight:900; display:block; line-height:1; }
+    .rpt-sum-lbl  { font-size:.68em; opacity:.6; font-weight:700; text-transform:uppercase; letter-spacing:.05em; margin-top:3px; display:block; }
+    .rpt-divider  { width:1px; background:rgba(255,255,255,.15); align-self:stretch; }
+    .rpt-chart-wrap { position:relative; height:260px; margin-bottom:16px; }
+    .rpt-table-wrap { overflow-x:auto; border-radius:var(--r-sm); border:1px solid var(--border); }
+    .rpt-range-label {
+      display:inline-block; background:rgba(255,255,255,.1); border:1px solid rgba(255,255,255,.15);
+      border-radius:var(--r-full); padding:3px 12px; font-size:.72em; color:rgba(255,255,255,.55);
+      font-weight:600; margin-top:6px;
+    }
+  </style>
+
+  <div class="card">
+    <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:14px;">
+      <div class="card-title" style="margin-bottom:0;">📈 דוחות צריכה</div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;">
+        <button class="btn btn-green w-auto sm" onclick="downloadReportCSV()">📥 ייצא CSV</button>
+        <button class="btn btn-blue w-auto sm" onclick="downloadReportPDF()">🖨️ הדפס</button>
+      </div>
+    </div>
+
+    <!-- Mode tabs -->
+    <div class="rpt-mode-tabs">
+      <button class="rpt-mode-btn active" data-mode="days"   onclick="setReportMode('days',this)">📅 לפי ימים</button>
+      <button class="rpt-mode-btn"        data-mode="month"  onclick="setReportMode('month',this)">📆 לפי חודש</button>
+      <button class="rpt-mode-btn"        data-mode="year"   onclick="setReportMode('year',this)">🗓️ לפי שנה</button>
+      <button class="rpt-mode-btn"        data-mode="custom" onclick="setReportMode('custom',this)">✂️ מותאם</button>
+    </div>
+
+    <!-- Panel: days -->
+    <div id="rpt-panel-days" class="rpt-panel open">
+      <div>
+        <span class="rpt-label">טווח זמן</span>
+        <select class="rpt-select" id="report-range" onchange="generateReport()">
+          <option value="1">היום</option>
+          <option value="7">שבוע אחרון</option>
+          <option value="14">14 ימים</option>
+          <option value="30" selected>30 ימים</option>
+          <option value="60">60 ימים</option>
+          <option value="90">90 ימים</option>
+          <option value="180">חצי שנה</option>
+          <option value="365">שנה שלמה</option>
+        </select>
+      </div>
+      <button class="btn btn-blue w-auto" style="padding:10px 18px;" onclick="generateReport()">🔄 חשב</button>
+    </div>
+
+    <!-- Panel: month -->
+    <div id="rpt-panel-month" class="rpt-panel">
+      <div>
+        <span class="rpt-label">חודש</span>
+        <select class="rpt-select" id="rpt-month-sel" onchange="generateReport()">
+          <option value="0">ינואר</option><option value="1">פברואר</option>
+          <option value="2">מרץ</option><option value="3">אפריל</option>
+          <option value="4">מאי</option><option value="5">יוני</option>
+          <option value="6">יולי</option><option value="7">אוגוסט</option>
+          <option value="8">ספטמבר</option><option value="9">אוקטובר</option>
+          <option value="10">נובמבר</option><option value="11">דצמבר</option>
+        </select>
+      </div>
+      <div>
+        <span class="rpt-label">שנה</span>
+        <select class="rpt-select" id="rpt-month-year-sel" onchange="generateReport()"></select>
+      </div>
+      <button class="btn btn-blue w-auto" style="padding:10px 18px;" onclick="generateReport()">🔄 חשב</button>
+    </div>
+
+    <!-- Panel: year -->
+    <div id="rpt-panel-year" class="rpt-panel">
+      <div>
+        <span class="rpt-label">שנה</span>
+        <select class="rpt-select" id="rpt-year-sel" onchange="generateReport()"></select>
+      </div>
+      <button class="btn btn-blue w-auto" style="padding:10px 18px;" onclick="generateReport()">🔄 חשב</button>
+    </div>
+
+    <!-- Panel: custom -->
+    <div id="rpt-panel-custom" class="rpt-panel">
+      <div>
+        <span class="rpt-label">מתאריך</span>
+        <input type="date" class="rpt-date-input" id="rpt-from" onchange="generateReport()">
+      </div>
+      <div>
+        <span class="rpt-label">עד תאריך</span>
+        <input type="date" class="rpt-date-input" id="rpt-to" onchange="generateReport()">
+      </div>
+      <button class="btn btn-blue w-auto" style="padding:10px 18px;" onclick="generateReport()">🔄 חשב</button>
+    </div>
+
+    <!-- Summary bar -->
+    <div id="rpt-summary-bar" class="rpt-summary-bar" style="display:none;">
+      <div class="rpt-sum-item">
+        <span id="rpt-s-units" class="rpt-sum-num">0</span>
+        <span class="rpt-sum-lbl">יחידות יצאו</span>
+      </div>
+      <div class="rpt-divider"></div>
+      <div class="rpt-sum-item">
+        <span id="rpt-s-items" class="rpt-sum-num">0</span>
+        <span class="rpt-sum-lbl">סוגי פריטים</span>
+      </div>
+      <div class="rpt-divider"></div>
+      <div class="rpt-sum-item">
+        <span id="rpt-s-ops" class="rpt-sum-num">0</span>
+        <span class="rpt-sum-lbl">פעולות</span>
+      </div>
+      <div class="rpt-divider"></div>
+      <div class="rpt-sum-item">
+        <span id="rpt-s-users" class="rpt-sum-num">0</span>
+        <span class="rpt-sum-lbl">משתמשים פעילים</span>
+      </div>
+      <div style="width:100%;">
+        <span id="rpt-s-range" class="rpt-range-label">—</span>
+      </div>
+    </div>
+
+    <!-- Trend chart -->
+    <div id="rpt-chart-section" style="display:none;">
+      <div class="card-title" style="font-size:.88em;margin-bottom:8px;">📊 גרף צריכה לאורך זמן</div>
+      <div class="rpt-chart-wrap"><canvas id="chartReport"></canvas></div>
+    </div>
+
+    <!-- Top users -->
+    <div id="rpt-users-section" style="display:none;margin-top:14px;">
+      <div class="card-title" style="font-size:.88em;margin-bottom:8px;">👥 מובילי שימוש</div>
+      <div id="rpt-users-list"></div>
+    </div>
+
+    <!-- Main results table -->
+    <div id="rpt-results-section" style="display:none;margin-top:14px;">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;flex-wrap:wrap;gap:8px;">
+        <div class="card-title" style="font-size:.88em;margin-bottom:0;">🔍 פירוט לפי מוצר</div>
+        <div style="display:flex;gap:6px;align-items:center;">
+          <span style="font-size:.78em;color:var(--text-muted);font-weight:600;">מיין לפי:</span>
+          <select class="rpt-select" id="rpt-sort-sel" style="padding:6px 10px;font-size:.82em;" onchange="renderReportResults()">
+            <option value="qty">כמות (רב לפחות)</option>
+            <option value="name">שם (א-ת)</option>
+            <option value="ops">מספר פעולות</option>
+          </select>
         </div>
       </div>
+      <div id="report-results"></div>
+    </div>
+
+    <div id="rpt-empty" class="empty-state" style="display:none;">
+      <div class="es-icon">📊</div>
+      <p>אין נתונים לתקופה הנבחרת</p>
+    </div>
+
+  </div>
+</div></div>
 
       <!-- INVENTORY -->
       <div id="tab-inv" class="tab-pane hidden">
@@ -2196,7 +2354,7 @@ const SITE_CONFIG = {
   },
   nave: {
     title:      'מערכת מלאי מד"א נווה ימין',
-    logoUrl:    'https://cdn.jsdelivr.net/gh/ofireng/MDAAppImages/NeveYamin.png',
+    logoUrl:    'https://cdn.jsdelivr.net/gh/infomedainventroy-lang/Nave_Yamin@main/Neve-Yamin.png',
     headerText: 'מד"א נווה ימין',
     logoutUrl:  'https://cdn.jsdelivr.net/gh/infomedainventroy-lang/mda-system-Neve_Yamin@main/Neve-Yamin.png',
     firebase: {
@@ -2241,6 +2399,7 @@ const auth = firebase.auth();
 let inv = [], team = [], logs = [], admins = {};
 let localChanges = {};
 let chartPie = null, chartBar = null;
+let _chartReport = null;
 let LOW_STOCK_THRESHOLD = 3;
 let _uFilter = 'all', _uSearch = '';
 let _aFilter = 'all', _aSearch = '';
@@ -2791,15 +2950,6 @@ function getThreshold(item) {
 function checkLowStock() {
   const low = inv.filter(i => { const q = Number.isFinite(i.qty) ? i.qty : 0; return q <= getThreshold(i); });
   const out = inv.filter(i => (Number.isFinite(i.qty) ? i.qty : 0) === 0);
-  const makeList = items => items.map(i => {
-    const q = Number.isFinite(i.qty) ? i.qty : 0;
-    return `${q===0?'🚨':'⚠️'} <b>${esc(i.name)}</b> — נותרו <b style="color:var(--c-red)">${q}</b>`;
-  }).join('<br>');
-  const al = document.getElementById('admin-alert-list');
-  if (ab && al) {
-    if (low.length) { ab.classList.add('show'); al.innerHTML = makeList(low); }
-    else ab.classList.remove('show');
-  }
   document.getElementById('st-low').textContent = low.length;
   document.getElementById('st-out').textContent = out.length;
   const logBtn = document.getElementById('tab-logs-btn');
@@ -3592,34 +3742,331 @@ function downloadInv() {
 }
 
 /* ================================================================
-   REPORTS
+   REPORTS — enhanced (days / month / year / custom)
    ================================================================ */
+
+let _reportMode = 'days';
+let _reportCache = []; // cached filtered logs for current view
+
+/* ── Init year dropdowns ── */
+function _initReportYearDropdowns() {
+  const now  = new Date();
+  const thisY = now.getFullYear();
+  const years = [];
+  for (let y = thisY; y >= thisY - 5; y--) years.push(y);
+
+  ['rpt-year-sel', 'rpt-month-year-sel'].forEach(id => {
+    const el = document.getElementById(id);
+    if (!el || el.dataset.init) return;
+    el.innerHTML = years.map(y =>
+      `<option value="${y}" ${y === thisY ? 'selected' : ''}>${y}</option>`
+    ).join('');
+    el.dataset.init = '1';
+  });
+
+  // Default month = current
+  const mSel = document.getElementById('rpt-month-sel');
+  if (mSel) mSel.value = now.getMonth();
+
+  // Default custom range = current month
+  const from = document.getElementById('rpt-from');
+  const to   = document.getElementById('rpt-to');
+  if (from && !from.value) {
+    const start = new Date(thisY, now.getMonth(), 1);
+    from.value  = start.toISOString().slice(0, 10);
+  }
+  if (to && !to.value) {
+    to.value = now.toISOString().slice(0, 10);
+  }
+}
+
+/* ── Switch mode tabs ── */
+function setReportMode(mode, btn) {
+  _reportMode = mode;
+  document.querySelectorAll('.rpt-mode-btn').forEach(b => b.classList.remove('active'));
+  if (btn) btn.classList.add('active');
+  ['days','month','year','custom'].forEach(m => {
+    const p = document.getElementById('rpt-panel-' + m);
+    if (p) p.classList.toggle('open', m === mode);
+  });
+  _initReportYearDropdowns();
+  generateReport();
+}
+
+/* ── Compute date range from current mode ── */
+function _getReportRange() {
+  let from, to, label;
+  const now = new Date();
+
+  if (_reportMode === 'days') {
+    const days = parseInt(document.getElementById('report-range')?.value || 30);
+    to   = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59, 999);
+    from = new Date(to.getTime() - (days - 1) * 86400000);
+    from.setHours(0, 0, 0, 0);
+    const names = { 1:'היום', 7:'שבוע אחרון', 14:'14 ימים', 30:'30 ימים', 60:'60 ימים', 90:'90 ימים', 180:'חצי שנה', 365:'שנה שלמה' };
+    label = names[days] || `${days} ימים`;
+
+  } else if (_reportMode === 'month') {
+    const m    = parseInt(document.getElementById('rpt-month-sel')?.value ?? now.getMonth());
+    const y    = parseInt(document.getElementById('rpt-month-year-sel')?.value || now.getFullYear());
+    from = new Date(y, m, 1, 0, 0, 0, 0);
+    to   = new Date(y, m + 1, 0, 23, 59, 59, 999);
+    const mNames = ['ינואר','פברואר','מרץ','אפריל','מאי','יוני','יולי','אוגוסט','ספטמבר','אוקטובר','נובמבר','דצמבר'];
+    label = mNames[m] + ' ' + y;
+
+  } else if (_reportMode === 'year') {
+    const y = parseInt(document.getElementById('rpt-year-sel')?.value || now.getFullYear());
+    from  = new Date(y, 0, 1, 0, 0, 0, 0);
+    to    = new Date(y, 11, 31, 23, 59, 59, 999);
+    label = 'שנת ' + y;
+
+  } else { // custom
+    const fv = document.getElementById('rpt-from')?.value;
+    const tv = document.getElementById('rpt-to')?.value;
+    if (!fv || !tv) return null;
+    from  = new Date(fv + 'T00:00:00');
+    to    = new Date(tv + 'T23:59:59');
+    if (from > to) return null;
+    label = fv.split('-').reverse().join('/') + ' — ' + tv.split('-').reverse().join('/');
+  }
+  return { from, to, label, fromTS: from.getTime(), toTS: to.getTime() };
+}
+
+/* ── Build chart data based on mode ── */
+function _buildChartData(filteredLogs, range) {
+  const labels = [], data = [];
+
+  if (_reportMode === 'days') {
+    const days = parseInt(document.getElementById('report-range')?.value || 30);
+    const buckets = days <= 14 ? 'day' : days <= 90 ? 'day' : 'week';
+    if (buckets === 'day') {
+      for (let i = days - 1; i >= 0; i--) {
+        const d = new Date(range.to); d.setDate(d.getDate() - i);
+        const ds = new Date(d.getFullYear(), d.getMonth(), d.getDate(), 0, 0, 0, 0).getTime();
+        const de = ds + 86399999;
+        labels.push(d.toLocaleDateString('he-IL', { day:'numeric', month:'short' }));
+        data.push(filteredLogs.filter(l => l.timestamp >= ds && l.timestamp <= de)
+                              .reduce((s,l) => s + (Number.isFinite(l.amount) ? l.amount : 0), 0));
+      }
+    } else {
+      // Weekly buckets
+      const start = new Date(range.from); start.setHours(0,0,0,0);
+      let cur = new Date(start);
+      while (cur <= range.to) {
+        const ws = cur.getTime();
+        const we = Math.min(ws + 7 * 86400000 - 1, range.toTS);
+        labels.push(cur.toLocaleDateString('he-IL', { day:'numeric', month:'short' }));
+        data.push(filteredLogs.filter(l => l.timestamp >= ws && l.timestamp <= we)
+                              .reduce((s,l) => s + (Number.isFinite(l.amount) ? l.amount : 0), 0));
+        cur = new Date(ws + 7 * 86400000);
+      }
+    }
+
+  } else if (_reportMode === 'month') {
+    // Daily buckets for the month
+    let cur = new Date(range.from);
+    while (cur <= range.to) {
+      const ds = new Date(cur.getFullYear(), cur.getMonth(), cur.getDate(), 0, 0, 0, 0).getTime();
+      const de = ds + 86399999;
+      labels.push(cur.getDate() + '');
+      data.push(filteredLogs.filter(l => l.timestamp >= ds && l.timestamp <= de)
+                            .reduce((s,l) => s + (Number.isFinite(l.amount) ? l.amount : 0), 0));
+      cur.setDate(cur.getDate() + 1);
+    }
+
+  } else if (_reportMode === 'year') {
+    // Monthly buckets
+    const mNames = ['ינו׳','פבר׳','מרץ','אפר׳','מאי','יוני','יולי','אוג׳','ספט׳','אוק׳','נוב׳','דצמ׳'];
+    const y = parseInt(document.getElementById('rpt-year-sel')?.value || new Date().getFullYear());
+    for (let m = 0; m < 12; m++) {
+      const ms = new Date(y, m, 1, 0, 0, 0, 0).getTime();
+      const me = new Date(y, m + 1, 0, 23, 59, 59, 999).getTime();
+      labels.push(mNames[m]);
+      data.push(filteredLogs.filter(l => l.timestamp >= ms && l.timestamp <= me)
+                            .reduce((s,l) => s + (Number.isFinite(l.amount) ? l.amount : 0), 0));
+    }
+
+  } else {
+    // Custom: auto bucket size
+    const diffDays = Math.round((range.toTS - range.fromTS) / 86400000);
+    if (diffDays <= 31) {
+      let cur = new Date(range.from);
+      while (cur <= range.to) {
+        const ds = new Date(cur.getFullYear(), cur.getMonth(), cur.getDate()).getTime();
+        const de = ds + 86399999;
+        labels.push(cur.toLocaleDateString('he-IL', { day:'numeric', month:'short' }));
+        data.push(filteredLogs.filter(l => l.timestamp >= ds && l.timestamp <= de)
+                              .reduce((s,l) => s + (Number.isFinite(l.amount) ? l.amount : 0), 0));
+        cur.setDate(cur.getDate() + 1);
+      }
+    } else {
+      // Weekly
+      let cur = new Date(range.from); cur.setHours(0,0,0,0);
+      while (cur <= range.to) {
+        const ws = cur.getTime(), we = Math.min(ws + 7*86400000-1, range.toTS);
+        labels.push(cur.toLocaleDateString('he-IL', { day:'numeric', month:'short' }));
+        data.push(filteredLogs.filter(l => l.timestamp >= ws && l.timestamp <= we)
+                              .reduce((s,l) => s + (Number.isFinite(l.amount) ? l.amount : 0), 0));
+        cur = new Date(ws + 7*86400000);
+      }
+    }
+  }
+
+  return { labels, data };
+}
+
+/* ── Main generate function ── */
 function generateReport() {
-  const days = parseInt(document.getElementById('report-range').value || 30);
-  const limit = Date.now() - days * 86400000;
+  _initReportYearDropdowns();
+  const range = _getReportRange();
+
+  // Hide all result sections
+  ['rpt-summary-bar','rpt-chart-section','rpt-users-section','rpt-results-section'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.style.display = 'none';
+  });
+  const emptyEl = document.getElementById('rpt-empty');
+  if (emptyEl) emptyEl.style.display = 'none';
+
+  if (!range) return;
+
+  // Filter logs
+  _reportCache = logs.filter(l =>
+    l.timestamp >= range.fromTS &&
+    l.timestamp <= range.toTS &&
+    (l.action === 'take' || l.action === 'sub' || l.action === 'manual')
+  );
+
+  if (!_reportCache.length) {
+    if (emptyEl) emptyEl.style.display = 'block';
+    return;
+  }
+
+  // ── Summary stats ──
+  const totalUnits = _reportCache.reduce((s,l) => s + (Number.isFinite(l.amount) ? l.amount : 0), 0);
+  const itemSet    = new Set(_reportCache.map(l => l.item || l.itemName || l.itemId));
+  const userSet    = new Set(_reportCache.map(l => l.user));
+
+  document.getElementById('rpt-s-units').textContent = totalUnits;
+  document.getElementById('rpt-s-items').textContent = itemSet.size;
+  document.getElementById('rpt-s-ops').textContent   = _reportCache.length;
+  document.getElementById('rpt-s-users').textContent = userSet.size;
+  document.getElementById('rpt-s-range').textContent = range.label;
+  document.getElementById('rpt-summary-bar').style.display = 'flex';
+
+  // ── Trend chart ──
+  const { labels, data } = _buildChartData(_reportCache, range);
+  const chartSection = document.getElementById('rpt-chart-section');
+  chartSection.style.display = 'block';
+  const ctx = document.getElementById('chartReport')?.getContext('2d');
+  if (ctx) {
+    if (_chartReport) _chartReport.destroy();
+    _chartReport = new Chart(ctx, {
+      type: 'bar',
+      data: {
+        labels,
+        datasets: [{
+          label: 'יחידות שיצאו',
+          data,
+          backgroundColor: data.map(v => v > 0 ? 'rgba(211,47,47,.75)' : 'rgba(200,200,200,.3)'),
+          borderColor:     data.map(v => v > 0 ? '#d32f2f' : '#ccc'),
+          borderWidth: 1, borderRadius: 4,
+          hoverBackgroundColor: 'rgba(211,47,47,.95)'
+        }]
+      },
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        plugins: { legend: { display: false }, tooltip: { callbacks: { label: ctx => ctx.parsed.y + ' יח׳' } } },
+        scales: { y: { beginAtZero: true, ticks: { precision: 0 } } }
+      }
+    });
+  }
+
+  // ── Top users ──
+  const userTotals = {};
+  _reportCache.forEach(l => {
+    const u = l.user || 'לא ידוע';
+    userTotals[u] = (userTotals[u] || 0) + (Number.isFinite(l.amount) ? l.amount : 0);
+  });
+  const topUsers = Object.entries(userTotals).sort((a,b) => b[1]-a[1]).slice(0, 5);
+  const maxU = topUsers[0]?.[1] || 1;
+  document.getElementById('rpt-users-list').innerHTML = topUsers.map(([name, qty]) => `
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:9px;">
+      <div style="width:28px;height:28px;border-radius:50%;background:linear-gradient(135deg,var(--c-navy-light),var(--c-blue));display:flex;align-items:center;justify-content:center;color:white;font-weight:900;font-size:.78em;flex-shrink:0;">${(name[0]||'?').toUpperCase()}</div>
+      <div style="flex:1;min-width:0;">
+        <div style="display:flex;justify-content:space-between;margin-bottom:3px;">
+          <b style="font-size:.88em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${esc(name)}</b>
+          <span style="font-weight:900;color:var(--c-red);font-size:.88em;flex-shrink:0;margin-right:6px;">${qty}</span>
+        </div>
+        <div style="height:5px;background:var(--border);border-radius:3px;overflow:hidden;">
+          <div style="height:100%;background:var(--c-navy);border-radius:3px;width:${Math.round(qty/maxU*100)}%;transition:width .6s;"></div>
+        </div>
+      </div>
+    </div>`).join('');
+  document.getElementById('rpt-users-section').style.display = 'block';
+
+  // ── Product results ──
+  renderReportResults();
+  document.getElementById('rpt-results-section').style.display = 'block';
+}
+
+/* ── Render results table (sortable) ── */
+function renderReportResults() {
+  const sort = document.getElementById('rpt-sort-sel')?.value || 'qty';
   const summary = {};
-  logs.filter(l => l.timestamp > limit && (l.action==='take'||l.action==='sub'))
-      .forEach(l => { const key = l.item||l.itemName||'?'; summary[key]=(summary[key]||0)+(parseInt(l.amount)||0); });
-  const summEl = document.getElementById('report-summary');
-  const resEl  = document.getElementById('report-results');
-  const sorted = Object.entries(summary).sort((a,b) => b[1]-a[1]);
-  if (!sorted.length) { if(summEl) summEl.textContent=''; resEl.innerHTML=`<div class="empty-state"><div class="es-icon">📊</div><p>אין נתונים לתקופה זו</p></div>`; return; }
-  const total = sorted.reduce((s,[,v])=>s+v,0), max = sorted[0][1];
-  if (summEl) summEl.textContent = `סה"כ ${total} יחידות יצאו ב-${days} ימים`;
-  resEl.innerHTML = sorted.map(([item,qty]) => `
-    <div class="report-item">
-      <div class="report-item-top"><b>${esc(item)}</b><span>${qty} יח'</span></div>
-      <div class="report-bar-bg"><div class="report-bar-fill" style="width:${Math.round(qty/max*100)}%;"></div></div>
+  _reportCache.forEach(l => {
+    const key = l.item || l.itemName || '?';
+    if (!summary[key]) summary[key] = { qty: 0, ops: 0 };
+    summary[key].qty += Number.isFinite(l.amount) ? l.amount : 0;
+    summary[key].ops++;
+  });
+
+  let sorted = Object.entries(summary);
+  if (sort === 'qty')  sorted.sort((a,b) => b[1].qty - a[1].qty);
+  if (sort === 'name') sorted.sort((a,b) => a[0].localeCompare(b[0], 'he'));
+  if (sort === 'ops')  sorted.sort((a,b) => b[1].ops - a[1].ops);
+
+  const max = sorted[0]?.[1].qty || 1;
+  document.getElementById('report-results').innerHTML = sorted.map(([item, d], idx) => `
+    <div class="report-item" style="display:flex;align-items:center;gap:10px;">
+      <div style="width:22px;text-align:center;font-size:.75em;color:var(--text-muted);font-weight:800;flex-shrink:0;">${idx+1}</div>
+      <div style="flex:1;min-width:0;">
+        <div class="report-item-top">
+          <b>${esc(item)}</b>
+          <div style="display:flex;gap:8px;align-items:center;flex-shrink:0;">
+            <span style="font-size:.76em;color:var(--text-muted);">${d.ops} פעולות</span>
+            <span style="font-weight:900;color:var(--c-red);">${d.qty} יח׳</span>
+          </div>
+        </div>
+        <div class="report-bar-bg">
+          <div class="report-bar-fill" style="width:${Math.round(d.qty/max*100)}%;background:${idx===0?'var(--c-red)':idx===1?'var(--c-orange)':'var(--c-navy)'};"></div>
+        </div>
+      </div>
     </div>`).join('');
 }
+
+/* ── CSV export ── */
 function downloadReportCSV() {
-  const days = parseInt(document.getElementById('report-range').value || 30);
-  const limit = Date.now() - days * 86400000;
+  const range = _getReportRange();
+  if (!range || !_reportCache.length) return showToast('אין נתונים לייצוא','warning');
   const summary = {};
-  logs.filter(l=>l.timestamp>limit&&(l.action==='take'||l.action==='sub')).forEach(l=>{summary[l.item||'?']=(summary[l.item||'?']||0)+(parseInt(l.amount)||0);});
-  let csv = '\uFEFFמוצר,כמות יצאה\n';
-  Object.entries(summary).sort((a,b)=>b[1]-a[1]).forEach(([item,qty])=>{csv+=csvSafe(item)+','+qty+'\n';});
-  dlFile(csv, `report_${days}d_${dateStamp()}.csv`, 'text/csv');
+  _reportCache.forEach(l => {
+    const key = l.item || l.itemName || '?';
+    if (!summary[key]) summary[key] = { qty:0, ops:0 };
+    summary[key].qty += Number.isFinite(l.amount) ? l.amount : 0;
+    summary[key].ops++;
+  });
+  let csv = '\uFEFFמוצר,כמות יצאה,מספר פעולות,תקופה\n';
+  Object.entries(summary).sort((a,b)=>b[1].qty-a[1].qty).forEach(([item, d]) => {
+    csv += [csvSafe(item), d.qty, d.ops, csvSafe(range.label)].join(',') + '\n';
+  });
+  dlFile(csv, `report_${range.label.replace(/[^א-תa-z0-9]/gi,'_')}_${dateStamp()}.csv`, 'text/csv');
+  showToast('📥 הדוח יוצא בהצלחה');
+}
+
+/* ── Print ── */
+function downloadReportPDF() {
+  window.print();
 }
 
 /* ================================================================
