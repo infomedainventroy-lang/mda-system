@@ -6543,7 +6543,7 @@ async function _dcFlushBatch() {
         embed.thumbnail = { url: CFG.logoUrl };
       }
       // Mention role for all alert types
-      const MENTION_TAG = '<@&1483893017529024662>';
+      const MENTION_TAG = '<@&1483800391660339303>';
       const MENTION_LABELS = { out: '🚨 דרוש מילוי!', low: '⚠️ מלאי נמוך!', add: '✅ מלאי עודכן', take: '📤 ציוד יצא', order: '🛒 הזמנה חדשה' };
       if (!content) content = MENTION_TAG + ' ' + (MENTION_LABELS[type] || '');
       embeds.push(embed);
@@ -6563,7 +6563,7 @@ async function _dcFlushBatch() {
         timestamp:   new Date().toISOString(),
       });
       // Mention role for all alert types
-      const MENTION_TAG2 = '<@&1483893017529024662>';
+      const MENTION_TAG2 = '<@&1483800391660339303>';
       const MENTION_LABELS2 = { out: '🚨 דרוש מילוי!', low: '⚠️ מלאי נמוך!', add: '✅ מלאי עודכן', take: '📤 ציוד יצא', order: '🛒 הזמנה חדשה' };
       if (!content) content = MENTION_TAG2 + ' ' + (MENTION_LABELS2[type] || '');
     }
@@ -6798,7 +6798,7 @@ async function sendScheduledReport(period) {
   try {
     const body = { embeds: [embed], username: siteTitle + ' · דוחות אוטומטיים' };
     if (CFG && CFG.logoUrl) body.avatar_url = CFG.logoUrl;
-    body.content = '<@&1483893017529024662> 📊 ' + label;
+    body.content = '<@&1483800391660339303> 📊 ' + label;
     const res = await fetch(_dc.webhookUrl, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -6866,7 +6866,7 @@ async function notifyDiscordOrder(orderItems, user) {
 /* ── Init ── */
 async function initDiscordSystem() {
   await loadDiscordSettings();
-  console.log('[Discord] ✅ מערכת Discord אותחלה v5.2 | mention role: 1483893017529024662');
+  console.log('[Discord] ✅ מערכת Discord אותחלה v5.2 | mention role: 1483800391660339303');
 }
 
 console.log('[Discord] מודול Discord v5.2 נטען ✅ | תיוג role פעיל לכל ההתראות');
